@@ -63,6 +63,9 @@ def check():
         icon=(OUT/f'assets/favicon-{size}.png').read_bytes()
         assert icon==(ROOT/f'assets/favicon-{size}.png').read_bytes()
         assert icon[:8]==b'\x89PNG\r\n\x1a\n' and struct.unpack('>II',icon[16:24])==(size,size)
+    original=(ROOT/'assets/agent-faceted-original-32.png').read_bytes()
+    assert original[:8]==b'\x89PNG\r\n\x1a\n' and struct.unpack('>II',original[16:24])==(32,32)
+    assert original != (ROOT/'assets/favicon-32.png').read_bytes(), 'favicon-32 must use the blocky v2 source'
     css=(OUT/'assets/style.css').read_text();assert '@media(max-width:600px)' in css and 'overflow-wrap:anywhere' in css
     print('PASS: top30; compact20/28; archive646; source links, anchors, privacy and responsive metadata')
 if __name__=='__main__':check()
