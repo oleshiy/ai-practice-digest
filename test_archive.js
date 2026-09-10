@@ -1,0 +1,36 @@
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const root = __dirname;
+const data = JSON.parse(fs.readFileSync(path.join(root, 'content/findings.json'), 'utf8')).findings;
+const nodes = data.map(item => ({hidden: false, textContent: `${item.title} ${item.body_markdown}`, dataset: {source: item.source, fresh: String(item.fresh)}}));
+const controls = {};
+for (const id of ['finding-search','finding-source','finding-period','finding-count','finding-previous','finding-next','finding-clear']) {
+  controls[`#${id}`] = {value: id === 'finding-period' ? 'last30' : '', textContent: '', disabled: false, listeners: {}, addEventListener(type, fn) { this.listeners[type] = fn; }, focus() {}};
+}
+const archive = {querySelectorAll() { return nodes; }};
+const document = {querySelector(selector) { return selector === '[data-findings]' ? archive : controls[selector]; }};
+vm.runInNewContext(fs.readFileSync(path.join(root, 'assets/findings.js'), 'utf8'), {document, location: {search: ''}, URLSearchParams});
+const visible = () => nodes.filter(node => !node.hidden);
+const fire = (id, event) => controls[`#${id}`].listeners[event]();
+assert.equal(visible().length, 20);
+assert.equal(nodes[0].hidden, false);
+assert.equal(controls['#finding-previous'].disabled, true);
+fire('finding-next','click');
+assert.equal(nodes[0].hidden, true);
+assert.equal(nodes[20].hidden, false);
+controls['#finding-period'].value = 'last10'; fire('finding-period','change');
+assert(visible().every(node => node.dataset.fresh === 'true'));
+assert(controls['#finding-count'].textContent.includes(String(data.filter(x => x.fresh).length)));
+controls['#finding-source'].value = 'openai.com'; fire('finding-source','change');
+assert(visible().every(node => node.dataset.source === 'openai.com'));
+controls['#finding-search'].value = 'zzzz-no-such-finding'; fire('finding-search','input');
+assert.equal(visible().length, 0);
+assert(controls['#finding-count'].textContent.includes('Ничего не найдено'));
+fire('finding-clear','click');
+assert.equal(visible().length, 20);
+controls['#finding-search'].value = '  SHOPIFY  '; fire('finding-search','input');
+assert(visible().length > 0 && visible().every(node => node.textContent.toLowerCase().includes('shopify')));
+console.log('PASS: archive pagination, source/date filters, search, empty state and reset');
