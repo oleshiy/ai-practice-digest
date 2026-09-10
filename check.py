@@ -2,17 +2,18 @@
 from pathlib import Path
 from html.parser import HTMLParser
 from urllib.parse import urlsplit,unquote
-import json,re
+import json,re,struct
 ROOT=Path(__file__).resolve().parent
 OUT=ROOT/'_site'
 class Page(HTMLParser):
     def __init__(self,text):
-        super().__init__(convert_charrefs=True);self.links=[];self.ids=set();self.prose=False;self.items=0;self.sections=0;self.viewport=False;self.feed(text)
+        super().__init__(convert_charrefs=True);self.links=[];self.ids=set();self.prose=False;self.items=0;self.sections=0;self.viewport=False;self.icons=[];self.feed(text)
     def handle_starttag(self,tag,attrs):
         a=dict(attrs)
         if 'id' in a:
             assert a['id'] not in self.ids,'Duplicate anchor';self.ids.add(a['id'])
         if tag=='a' and 'href' in a:self.links.append(a['href'])
+        if tag=='link' and a.get('rel')=='icon':self.icons.append(a)
         if tag=='article' and a.get('class')=='prose':self.prose=True
         if self.prose and tag=='li':self.items+=1
         if self.prose and tag=='h2':self.sections+=1
@@ -21,7 +22,7 @@ class Page(HTMLParser):
         if tag=='article':self.prose=False
 
 def check():
-    from build import markdown
+    from build import markdown,BASE
     sample='# Выпуск\n\n## Материал\n\n1. [Первый](https://example.com/one)\n\n    Первый абзац.\n\n    Второй абзац.\n\n2. [Второй](https://example.com/two)\n\n    Текст.\n\nКонечная статистика.\n'
     rendered,_=markdown(sample)
     assert rendered.count('<ol>')==1 and rendered.count('<li>')==2
@@ -31,6 +32,7 @@ def check():
     assert len(pages)==len(editions)+4
     for name,page in pages.items():
         assert page.viewport and 'main' in page.ids,name
+        assert page.icons==[{'rel':'icon','type':'image/png','sizes':'32x32','href':BASE+'assets/favicon-32.png'}],name
         for link in page.links:
             u=urlsplit(link)
             if u.scheme:
@@ -55,8 +57,11 @@ def check():
     forbidden=r'n8n-ai-digest|/Users/|runtime/monthly|material_id|unit_id|record_hash|github_pat_|ghp_[A-Za-z0-9]{20}|BEGIN .*PRIVATE KEY'
     for folder in [ROOT/'content',OUT]:
         for f in folder.rglob('*'):
-            if f.is_file():assert not re.search(forbidden,f.read_text()),f
-    assert set(p.suffix for p in OUT.rglob('*') if p.is_file())<= {'.html','.css','.js',''}
+            if f.is_file() and f.suffix!='.png':assert not re.search(forbidden,f.read_text()),f
+    assert set(p.suffix for p in OUT.rglob('*') if p.is_file())<= {'.html','.css','.js','.png',''}
+    icon=(OUT/'assets/favicon-32.png').read_bytes()
+    assert icon==(ROOT/'assets/favicon-32.png').read_bytes()
+    assert icon[:8]==b'\x89PNG\r\n\x1a\n' and struct.unpack('>II',icon[16:24])==(32,32)
     css=(OUT/'assets/style.css').read_text();assert '@media(max-width:600px)' in css and 'overflow-wrap:anywhere' in css
     print('PASS: top30; compact20/28; archive646; source links, anchors, privacy and responsive metadata')
 if __name__=='__main__':check()
