@@ -32,7 +32,7 @@ def check():
     assert len(pages)==len(editions)+4
     for name,page in pages.items():
         assert page.viewport and 'main' in page.ids,name
-        assert page.icons==[{'rel':'icon','type':'image/png','sizes':'32x32','href':BASE+'assets/favicon-32.png'}],name
+        assert page.icons==[{'rel':'icon','type':'image/png','sizes':f'{size}x{size}','href':BASE+f'assets/favicon-{size}.png'} for size in (16,32)],name
         for link in page.links:
             u=urlsplit(link)
             if u.scheme:
@@ -59,9 +59,10 @@ def check():
         for f in folder.rglob('*'):
             if f.is_file() and f.suffix!='.png':assert not re.search(forbidden,f.read_text()),f
     assert set(p.suffix for p in OUT.rglob('*') if p.is_file())<= {'.html','.css','.js','.png',''}
-    icon=(OUT/'assets/favicon-32.png').read_bytes()
-    assert icon==(ROOT/'assets/favicon-32.png').read_bytes()
-    assert icon[:8]==b'\x89PNG\r\n\x1a\n' and struct.unpack('>II',icon[16:24])==(32,32)
+    for size in (16,32):
+        icon=(OUT/f'assets/favicon-{size}.png').read_bytes()
+        assert icon==(ROOT/f'assets/favicon-{size}.png').read_bytes()
+        assert icon[:8]==b'\x89PNG\r\n\x1a\n' and struct.unpack('>II',icon[16:24])==(size,size)
     css=(OUT/'assets/style.css').read_text();assert '@media(max-width:600px)' in css and 'overflow-wrap:anywhere' in css
     print('PASS: top30; compact20/28; archive646; source links, anchors, privacy and responsive metadata')
 if __name__=='__main__':check()
