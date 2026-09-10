@@ -21,6 +21,12 @@ class Page(HTMLParser):
         if tag=='article':self.prose=False
 
 def check():
+    from build import markdown
+    sample='# Выпуск\n\n## Материал\n\n1. [Первый](https://example.com/one)\n\n    Первый абзац.\n\n    Второй абзац.\n\n2. [Второй](https://example.com/two)\n\n    Текст.\n\nКонечная статистика.\n'
+    rendered,_=markdown(sample)
+    assert rendered.count('<ol>')==1 and rendered.count('<li>')==2
+    assert '<p>Первый абзац.</p><p>Второй абзац.</p></li>' in rendered
+    assert rendered.endswith('<p>Конечная статистика.</p>')
     editions=json.loads((ROOT/'editions.json').read_text());pages={p.name:Page(p.read_text()) for p in OUT.glob('*.html')}
     assert len(pages)==len(editions)+3
     for name,page in pages.items():

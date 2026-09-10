@@ -20,28 +20,37 @@ def inline(text):
         pos=m.end()
     return ''.join(out)+html.escape(text[pos:])
 def markdown(text):
-    blocks=[];para=[];listing=None;toc=[];heading=0
-    def flush():
-        if para:blocks.append('<p>'+inline(' '.join(para))+'</p>');para.clear()
-    def close_list():
-        nonlocal listing
-        if listing:blocks.append('</'+listing+'>');listing=None
-    for line in text.splitlines():
-        if not line.strip():flush();close_list();continue
+    """Render paragraphs and numbered entries with indented continuation paragraphs."""
+    blocks=[];toc=[];lines=text.splitlines();i=0;heading=0
+    while i<len(lines):
+        line=lines[i]
+        if not line.strip():i+=1;continue
         h=re.match(r'^(#{1,3}) (.+)',line)
         if h:
-            flush();close_list()
+            i+=1
             if len(h[1])==1:continue
             heading+=1;anchor='section-'+str(heading);title=h[2]
             toc.append((anchor,title));blocks.append(f'<h{len(h[1])} id="{anchor}">'+inline(title)+f'</h{len(h[1])}>');continue
         li=re.match(r'^(\d+\.|-) (.+)',line)
         if li:
-            flush();tag='ul' if li[1]=='-' else 'ol'
-            if listing!=tag:close_list();blocks.append('<'+tag+'>');listing=tag
-            blocks.append('<li>'+inline(li[2])+'</li>');continue
-        flush() if listing else None
-        close_list();para.append(line.strip())
-    flush();close_list()
+            tag='ul' if li[1]=='-' else 'ol';blocks.append('<'+tag+'>')
+            while i<len(lines):
+                match=re.match(r'^(\d+\.|-) (.+)',lines[i])
+                if not match:break
+                item=[match[2]];i+=1
+                while i<len(lines):
+                    if lines[i].startswith('    '):item.append(lines[i][4:]);i+=1
+                    elif not lines[i].strip():
+                        item.append('');i+=1
+                    else:break
+                paragraphs=re.split(r'\n\s*\n','\n'.join(item).strip())
+                blocks.append('<li>'+''.join('<p>'+inline(' '.join(x.splitlines()))+'</p>' for x in paragraphs if x.strip())+'</li>')
+                if i>=len(lines) or not re.match(r'^(\d+\.|-) (.+)',lines[i]):break
+            blocks.append('</'+tag+'>');continue
+        para=[]
+        while i<len(lines) and lines[i].strip() and not re.match(r'^(#{1,3} |\d+\. |- )',lines[i]):
+            para.append(lines[i].strip());i+=1
+        blocks.append('<p>'+inline(' '.join(para))+'</p>')
     return '\n'.join(blocks),toc
 
 def frame(title,description,body,path):
@@ -60,7 +69,8 @@ def build():
     for e in EDITIONS:
         content,toc=markdown((ROOT/'content'/e['file']).read_text())
         contents='<details open><summary>В этом выпуске</summary><ol>'+''.join('<li><a href="#'+a+'">'+html.escape(t)+'</a></li>' for a,t in toc)+'</ol></details>'
-        body='<main id="main"><header class="article-head"><a class="back" href="archive.html">← Все выпуски</a><p class="eyebrow">'+html.escape(e['label'])+' · 10 сентября 2026</p><h1>'+html.escape(e['title'])+'</h1><p class="deck">'+html.escape(e['subtitle'])+'</p><div class="issue-meta"><span>'+str(e['count'])+' находок</span><span>'+html.escape(e['window'])+'</span></div></header><div class="read-layout"><aside class="toc" aria-label="Оглавление">'+contents+'</aside><article class="prose">'+content+'</article></div><div class="after-reading"><a href="archive.html">Другие выпуски →</a><a href="#main">К началу ↑</a></div></main>'
+        heading=(ROOT/'content'/e['file']).read_text().splitlines()[0].removeprefix('# ')
+        body='<main id="main"><header class="article-head"><h1>'+html.escape(heading)+'</h1></header><div class="read-layout"><article class="prose">'+content+'</article><aside class="toc" aria-label="Оглавление">'+contents+'</aside></div><div class="after-reading"><a href="archive.html">Другие выпуски →</a><a href="#main">К началу ↑</a></div></main>'
         (OUT/(e['slug']+'.html')).write_text(frame(e['title'],e['subtitle'],body,e['slug']+'.html'))
     (OUT/'.nojekyll').write_text('')
     (OUT/'404.html').write_text(frame('Страница не найдена','Вернитесь к выпускам.', '<main id="main" class="home"><h1>Такой страницы нет</h1><p><a href="archive.html">Открыть архив выпусков</a></p></main>','404.html'))
