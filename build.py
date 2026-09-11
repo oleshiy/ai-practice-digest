@@ -1,11 +1,49 @@
 """Build a small static reading site from the approved Markdown editions."""
 from pathlib import Path
 import html,json,re,shutil
+from datetime import date
 from urllib.parse import urlsplit
 ROOT=Path(__file__).resolve().parent
 OUT=ROOT/'_site'
 BASE='https://oleshiy.github.io/ai-practice-digest/'
-EDITIONS=json.loads((ROOT/'editions.json').read_text())
+REQUIRED={'date','type','title'}
+TYPES={'daily','last10','last30','top30'}
+LABELS={'daily':'Суточный выпуск','last10':'10 суток','last30':'30 суток','top30':'Топ-подборка'}
+TYPE_ORDER={'daily':4,'top30':3,'last10':2,'last30':1}
+def releases():
+    result=[];slugs=set()
+    for source in sorted((ROOT/'content').glob('*.md')):
+        raw=source.read_text()
+        if not raw.startswith('---\n'):raise ValueError(f'{source.name}: missing metadata')
+        try:header,body=raw[4:].split('\n---\n',1)
+        except ValueError:raise ValueError(f'{source.name}: invalid metadata boundary')
+        body=body.lstrip('\n')
+        meta={}
+        for line in header.splitlines():
+            key,separator,value=line.partition(': ')
+            if not separator or not key or not value or key in meta:raise ValueError(f'{source.name}: invalid metadata')
+            meta[key]=value
+        if REQUIRED-meta.keys():raise ValueError(f'{source.name}: missing {sorted(REQUIRED-meta.keys())}')
+        if meta['type'] not in TYPES:raise ValueError(f'{source.name}: invalid type')
+        try:date.fromisoformat(meta['date'])
+        except ValueError:raise ValueError(f'{source.name}: invalid date')
+        if 'count' in meta and (not meta['count'].isdigit() or int(meta['count'])<1):raise ValueError(f'{source.name}: invalid count')
+        slug=source.stem
+        if not re.fullmatch(r'\d{4}-\d{2}-\d{2}-[a-z0-9-]+',slug) or slug in slugs:raise ValueError(f'{source.name}: invalid or duplicate slug')
+        slugs.add(slug)
+        if not body.startswith('# ') or body.splitlines()[0][2:]!=meta['title']:raise ValueError(f'{source.name}: title differs from body')
+        meta.update({'slug':slug,'file':source.name,'body':body,'count':int(meta['count']) if 'count' in meta else None})
+        meta.setdefault('label',LABELS[meta['type']])
+        meta.setdefault('subtitle','Редакционный выпуск со ссылками на источники и существенными ограничениями.')
+        meta.setdefault('window',meta['date'])
+        for key in ('details','shorts','sections'):
+            if key in meta:
+                if not meta[key].isdigit():raise ValueError(f'{source.name}: invalid {key}')
+                meta[key]=int(meta[key])
+        result.append(meta)
+    if not result:raise ValueError('No releases')
+    return sorted(result,key=lambda item:(item['date'],TYPE_ORDER[item['type']],item['slug']),reverse=True)
+EDITIONS=releases()
 TOKEN=re.compile(r'`([^`]+)`|\[([^\]]+)\]\(([^\s)]+)\)|\*\*(.+?)\*\*')
 def inline(text):
     out=[];pos=0
@@ -54,27 +92,30 @@ def markdown(text):
     return '\n'.join(blocks),toc
 
 def frame(title,description,body,path):
-    return '<!doctype html>\n<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+html.escape(title)+' · Практики ИИ</title><meta name="description" content="'+html.escape(description,quote=True)+'"><meta name="color-scheme" content="light"><meta property="og:type" content="article"><meta property="og:locale" content="ru_RU"><meta property="og:title" content="'+html.escape(title,quote=True)+'"><meta property="og:description" content="'+html.escape(description,quote=True)+'"><meta property="og:url" content="'+BASE+path+'"><link rel="canonical" href="'+BASE+path+'"><link rel="icon" type="image/png" sizes="16x16" href="'+BASE+'assets/favicon-16.png"><link rel="icon" type="image/png" sizes="32x32" href="'+BASE+'assets/favicon-32.png"><link rel="stylesheet" href="assets/style.css"></head><body><a class="skip" href="#main">Перейти к содержанию</a><header class="masthead"><a class="brand" href="index.html">Практики <span>ИИ</span></a><nav aria-label="Главная навигация"><a href="archive.html">Выпуски</a><a href="findings.html">Все находки</a><a href="https://github.com/oleshiy/ai-practice-digest">GitHub</a></nav></header>'+body+'<footer><a href="index.html">Практики ИИ</a><p>Опыт компаний, исследования и ограничения. Пересказы со ссылками на источники.</p><a href="archive.html">Все выпуски →</a></footer></body></html>\n'
+    return '<!doctype html>\n<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+html.escape(title)+' · Практики ИИ</title><meta name="description" content="'+html.escape(description,quote=True)+'"><meta name="color-scheme" content="light"><meta property="og:type" content="article"><meta property="og:locale" content="ru_RU"><meta property="og:title" content="'+html.escape(title,quote=True)+'"><meta property="og:description" content="'+html.escape(description,quote=True)+'"><meta property="og:url" content="'+BASE+path+'"><link rel="canonical" href="'+BASE+path+'"><link rel="icon" type="image/png" sizes="16x16" href="'+BASE+'assets/favicon-16.png"><link rel="icon" type="image/png" sizes="32x32" href="'+BASE+'assets/favicon-32.png"><link rel="stylesheet" href="assets/style.css"><script defer src="assets/releases.js"></script></head><body><a class="skip" href="#main">Перейти к содержанию</a><header class="masthead"><a class="brand" href="index.html">Практики <span>ИИ</span></a><nav aria-label="Главная навигация"><a href="archive.html">Выпуски</a><a href="findings.html">Все находки</a><a href="https://github.com/oleshiy/ai-practice-digest">GitHub</a></nav></header>'+body+'<footer><a href="index.html">Практики ИИ</a><p>Опыт компаний, исследования и ограничения. Пересказы со ссылками на источники.</p><a href="archive.html">Все выпуски →</a></footer></body></html>\n'
 
 def card(e):
-    return '<article class="edition"><div class="eyebrow">'+html.escape(e['label'])+' <span>10 сентября 2026</span></div><h2><a href="'+e['slug']+'.html">'+html.escape(e['title'])+'</a></h2><p>'+html.escape(e['subtitle'])+'</p><div class="edition-bottom"><span>'+str(e['count'])+' находок · '+html.escape(e['window'])+'</span><a class="read" href="'+e['slug']+'.html" aria-label="Читать: '+html.escape(e['title'],quote=True)+'">Читать <span aria-hidden="true">↗</span></a></div></article>'
+    summary=(str(e['count'])+' находок · ' if e['count'] is not None else '')+html.escape(e['window'])
+    return '<article class="edition" data-release><div class="eyebrow">'+html.escape(e['label'])+' <span>'+html.escape(e['date'])+'</span></div><h2><a href="'+e['slug']+'.html">'+html.escape(e['title'])+'</a></h2><p>'+html.escape(e['subtitle'])+'</p><div class="edition-bottom"><span>'+summary+'</span><a class="read" href="'+e['slug']+'.html" aria-label="Читать: '+html.escape(e['title'],quote=True)+'">Читать <span aria-hidden="true">↗</span></a></div></article>'
 
 def build():
     OUT.mkdir(exist_ok=True);(OUT/'assets').mkdir(exist_ok=True)
     shutil.copyfile(ROOT/'assets/style.css',OUT/'assets/style.css')
     shutil.copyfile(ROOT/'assets/findings.js',OUT/'assets/findings.js')
+    shutil.copyfile(ROOT/'assets/releases.js',OUT/'assets/releases.js')
     shutil.copyfile(ROOT/'assets/favicon-32.png',OUT/'assets/favicon-32.png')
     shutil.copyfile(ROOT/'assets/favicon-16.png',OUT/'assets/favicon-16.png')
     from archive_page import render_archive
     (OUT/'findings.html').write_text(frame('Архив находок','Поиск по принятым материалам о практиках ИИ.',render_archive(ROOT,inline),'findings.html'))
-    home='<main id="main" class="home"><div class="intro"><p class="eyebrow">Редакционные выпуски</p><h1>Что работает<br>в мире ИИ</h1><p>Реальные внедрения, полезные методы и ошибки, на которых можно учиться.</p></div><section class="editions" aria-label="Выпуски">'+''.join(card(e) for e in EDITIONS)+'</section></main>'
+    cards=''.join(card(e) for e in EDITIONS)
+    home='<main id="main" class="home"><div class="intro"><p class="eyebrow">Редакционные выпуски</p><h1>Что работает<br>в мире ИИ</h1><p>Реальные внедрения, полезные методы и ошибки, на которых можно учиться.</p></div><section class="editions" aria-label="Выпуски" data-release-list data-initial="5">'+cards+'</section><div class="release-actions"><button type="button" data-show-more hidden>Показать ещё</button><a class="read" href="archive.html">Все выпуски →</a></div></main>'
     (OUT/'index.html').write_text(frame('Практики ИИ','Понятные русские дайджесты о реальном опыте применения искусственного интеллекта.',home,''))
-    archive='<main id="main" class="home"><div class="intro compact"><p class="eyebrow">Все выпуски</p><h1>Архив выпусков</h1><p>У каждого выпуска своё окно отбора. Находки в разных выпусках могут пересекаться. Остальное полезное — в <a href="findings.html">архиве с поиском</a>.</p></div><section class="editions" aria-label="Архив выпусков">'+''.join(card(e) for e in EDITIONS)+'</section></main>'
+    archive='<main id="main" class="home"><div class="intro compact"><p class="eyebrow">Все выпуски</p><h1>Архив выпусков</h1><p>У каждого выпуска своё окно отбора. Находки в разных выпусках могут пересекаться. Остальное полезное — в <a href="findings.html">архиве с поиском</a>.</p></div><section class="editions" aria-label="Архив выпусков">'+cards+'</section></main>'
     (OUT/'archive.html').write_text(frame('Архив','Все опубликованные выпуски «Практики ИИ».',archive,'archive.html'))
     for e in EDITIONS:
-        content,toc=markdown((ROOT/'content'/e['file']).read_text())
+        content,toc=markdown(e['body'])
         contents='<details open><summary>В этом выпуске</summary><ol>'+''.join('<li><a href="#'+a+'">'+html.escape(t)+'</a></li>' for a,t in toc)+'</ol></details>'
-        heading=(ROOT/'content'/e['file']).read_text().splitlines()[0].removeprefix('# ')
+        heading=e['title']
         body='<main id="main"><header class="article-head"><h1>'+html.escape(heading)+'</h1></header><div class="read-layout"><article class="prose">'+content+'</article><aside class="toc" aria-label="Оглавление">'+contents+'</aside></div><div class="after-reading"><a href="archive.html">Другие выпуски →</a><a href="#main">К началу ↑</a></div></main>'
         (OUT/(e['slug']+'.html')).write_text(frame(e['title'],e['subtitle'],body,e['slug']+'.html'))
     (OUT/'.nojekyll').write_text('')

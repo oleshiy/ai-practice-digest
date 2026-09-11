@@ -22,14 +22,14 @@ class Page(HTMLParser):
         if tag=='article':self.prose=False
 
 def check():
-    from build import markdown,BASE
+    from build import markdown,BASE,EDITIONS
     sample='# Выпуск\n\n## Материал\n\n1. [Первый](https://example.com/one)\n\n    Первый абзац.\n\n    Второй абзац.\n\n2. [Второй](https://example.com/two)\n\n    Текст.\n\nКонечная статистика.\n'
     rendered,_=markdown(sample)
     assert rendered.count('<ol>')==1 and rendered.count('<li>')==2
     assert '<p>Первый абзац.</p><p>Второй абзац.</p></li>' in rendered
     assert rendered.endswith('<p>Конечная статистика.</p>')
-    editions=json.loads((ROOT/'editions.json').read_text());pages={p.name:Page(p.read_text()) for p in OUT.glob('*.html')}
-    assert len(pages)==len(editions)+4
+    pages={p.name:Page(p.read_text()) for p in OUT.glob('*.html')}
+    assert len(pages)==len(EDITIONS)+4
     for name,page in pages.items():
         assert page.viewport and 'main' in page.ids,name
         assert page.icons==[{'rel':'icon','type':'image/png','sizes':f'{size}x{size}','href':BASE+f'assets/favicon-{size}.png'} for size in (16,32)],name
@@ -40,21 +40,25 @@ def check():
             else:
                 target=u.path or name;assert target in pages,(name,link)
                 if u.fragment:assert unquote(u.fragment) in pages[target].ids,(name,link)
-    for e in editions:
+    for e in EDITIONS:
         page=pages[e['slug']+'.html']
-        if e['kind']=='daily':
-            assert page.sections==e['sections'],(e['slug'],page.sections,e['sections'])
+        if e['type']=='daily':
+            if 'sections' in e:assert page.sections==e['sections'],(e['slug'],page.sections,e['sections'])
             assert page.items==0,(e['slug'],page.items)
         else:
-            expected=e['details']+2*(e['kind']!='top30')
-            assert page.sections==expected,(e['slug'],page.sections,expected)
-            if e['kind']!='top30':assert page.items==e['count']+e.get('shorts',0),(e['slug'],page.items,e['count'])
-        raw=(ROOT/'content'/e['file']).read_text()
+            if 'details' in e:
+                expected=e['details']+2*(e['type']!='top30')
+                assert page.sections==expected,(e['slug'],page.sections,expected)
+            if e['type']!='top30' and e['count'] is not None:
+                assert page.items==e['count']+e.get('shorts',0),(e['slug'],page.items,e['count'])
+        raw=e['body']
         nonempty=[line for line in raw.splitlines() if line.strip()]
         assert nonempty[0].startswith('# ') and nonempty[1].startswith('## '),e['slug']
         source_links=re.findall(r'\]\((https?://[^\s)]+)\)',raw)
         assert all(u in page.links for u in source_links),e['slug']
         assert source_links and len(source_links)<=len(page.links)
+        assert e['slug']+'.html' in pages['index.html'].links,e['slug']
+        assert e['slug']+'.html' in pages['archive.html'].links,e['slug']
     archive=json.loads((ROOT/'content/findings.json').read_text())
     assert len(archive['findings'])==646
     assert (OUT/'findings.html').read_text().count('class="finding"')==646
@@ -72,5 +76,5 @@ def check():
     assert original[:8]==b'\x89PNG\r\n\x1a\n' and struct.unpack('>II',original[16:24])==(32,32)
     assert original != (ROOT/'assets/favicon-32.png').read_bytes(), 'favicon-32 must use the blocky v2 source'
     css=(OUT/'assets/style.css').read_text();assert '@media(max-width:600px)' in css and 'overflow-wrap:anywhere' in css
-    print('PASS: top30; compact20/28; archive646; source links, anchors, privacy and responsive metadata')
+    print('PASS: generated releases; source links, anchors, privacy and responsive metadata')
 if __name__=='__main__':check()
