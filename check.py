@@ -41,9 +41,14 @@ def check():
                 target=u.path or name;assert target in pages,(name,link)
                 if u.fragment:assert unquote(u.fragment) in pages[target].ids,(name,link)
     for e in editions:
-        page=pages[e['slug']+'.html'];expected=e['details']+2*(e['kind']!='top30')
-        assert page.sections==expected,(e['slug'],page.sections,expected)
-        if e['kind']!='top30':assert page.items==e['count']+e.get('shorts',0),(e['slug'],page.items,e['count'])
+        page=pages[e['slug']+'.html']
+        if e['kind']=='daily':
+            assert page.sections==e['sections'],(e['slug'],page.sections,e['sections'])
+            assert page.items==0,(e['slug'],page.items)
+        else:
+            expected=e['details']+2*(e['kind']!='top30')
+            assert page.sections==expected,(e['slug'],page.sections,expected)
+            if e['kind']!='top30':assert page.items==e['count']+e.get('shorts',0),(e['slug'],page.items,e['count'])
         raw=(ROOT/'content'/e['file']).read_text()
         nonempty=[line for line in raw.splitlines() if line.strip()]
         assert nonempty[0].startswith('# ') and nonempty[1].startswith('## '),e['slug']
