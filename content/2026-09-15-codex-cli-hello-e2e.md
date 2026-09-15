@@ -1,5 +1,7 @@
 ---
-title: "Пример сводки: Codex CLI E2E"
+date: 2026-09-15
+type: daily
+title: Пример сводки: Codex CLI E2E
 ---
 
 # Пример сводки: Codex CLI E2E
