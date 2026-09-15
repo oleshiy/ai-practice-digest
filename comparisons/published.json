@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "comparisons": [
+    {
+      "id": "2026-09-14-ab-initial",
+      "date": "2026-09-14",
+      "title": "Черновики: редакционная проверка не завершена",
+      "variants": [
+        {
+          "label": "A",
+          "file": "2026-09-14-blind-a.md",
+          "slug": "comparison-2026-09-14-blind-a"
+        },
+        {
+          "label": "B",
+          "file": "2026-09-14-blind-b.md",
+          "slug": "comparison-2026-09-14-blind-b"
+        }
+      ]
+    }
+  ]
+}
