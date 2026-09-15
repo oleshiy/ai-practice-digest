@@ -22,14 +22,14 @@ class Page(HTMLParser):
         if tag=='article':self.prose=False
 
 def check():
-    from build import markdown,BASE,EDITIONS
+    from build import markdown,BASE,EDITIONS,COMPARISONS
     sample='# Выпуск\n\n## Материал\n\n1. [Первый](https://example.com/one)\n\n    Первый абзац.\n\n    Второй абзац.\n\n2. [Второй](https://example.com/two)\n\n    Текст.\n\nКонечная статистика.\n'
     rendered,_=markdown(sample)
     assert rendered.count('<ol>')==1 and rendered.count('<li>')==2
     assert '<p>Первый абзац.</p><p>Второй абзац.</p></li>' in rendered
     assert rendered.endswith('<p>Конечная статистика.</p>')
     pages={p.name:Page(p.read_text()) for p in OUT.glob('*.html')}
-    assert len(pages)==len(EDITIONS)+4
+    assert len(pages)==len(EDITIONS)+4+len(COMPARISONS)+(1 if COMPARISONS else 0)
     for name,page in pages.items():
         assert page.viewport and 'main' in page.ids,name
         assert page.icons==[{'rel':'icon','type':'image/png','sizes':f'{size}x{size}','href':BASE+f'assets/favicon-{size}.png'} for size in (16,32)],name
@@ -59,6 +59,14 @@ def check():
         assert source_links and len(source_links)<=len(page.links)
         assert e['slug']+'.html' in pages['index.html'].links,e['slug']
         assert e['slug']+'.html' in pages['archive.html'].links,e['slug']
+    if COMPARISONS:
+        assert 'comparisons.html' in pages
+        assert 'comparisons.html' not in pages['index.html'].links
+        assert 'comparisons.html' not in pages['archive.html'].links
+        for item in COMPARISONS:
+            assert item['slug']+'.html' in pages['comparisons.html'].links,item['slug']
+            assert item['slug']+'.html' not in pages['index.html'].links,item['slug']
+            assert item['slug']+'.html' not in pages['archive.html'].links,item['slug']
     archive=json.loads((ROOT/'content/findings.json').read_text())
     assert len(archive['findings'])==646
     assert (OUT/'findings.html').read_text().count('class="finding"')==646

@@ -44,6 +44,42 @@ def releases():
     if not result:raise ValueError('No releases')
     return sorted(result,key=lambda item:(item['date'],TYPE_ORDER[item['type']],item['slug']),reverse=True)
 EDITIONS=releases()
+
+def comparisons():
+    """Return only explicitly allowlisted blind comparison readers for Pages."""
+    manifest_path=ROOT/'comparisons'/'published.json'
+    if not manifest_path.exists():return []
+    manifest=json.loads(manifest_path.read_text())
+    if set(manifest)!={'schema_version','comparisons'} or manifest['schema_version']!=1 or not isinstance(manifest['comparisons'],list) or len(manifest['comparisons'])!=1:raise ValueError('comparison manifest must allowlist exactly one A/B pair')
+    result=[];seen_files=set();seen_slugs=set()
+    for comparison in manifest['comparisons']:
+        if set(comparison)!={'id','date','title','variants'} or not isinstance(comparison['variants'],list) or len(comparison['variants'])!=2:raise ValueError('invalid comparison entry')
+        try:date.fromisoformat(comparison['date'])
+        except ValueError:raise ValueError('invalid comparison date')
+        labels=set()
+        for variant in comparison['variants']:
+            if set(variant)!={'label','file','slug'} or variant['label'] not in {'A','B'} or variant['label'] in labels:raise ValueError('invalid comparison variant')
+            labels.add(variant['label'])
+            if not re.fullmatch(r'\d{4}-\d{2}-\d{2}-blind-[ab]\.md',variant['file']) or variant['file'] in seen_files:raise ValueError('comparison file is not uniquely allowlisted')
+            if not re.fullmatch(r'comparison-\d{4}-\d{2}-\d{2}-blind-[ab]',variant['slug']) or variant['slug'] in seen_slugs:raise ValueError('invalid comparison slug')
+            source=ROOT/'comparisons'/variant['file']
+            if not source.is_file():raise ValueError('allowlisted comparison reader missing')
+            raw=source.read_text()
+            if not raw.startswith('---\n'):raise ValueError('comparison reader missing metadata')
+            try:header,body=raw[4:].split('\n---\n',1)
+            except ValueError:raise ValueError('comparison reader invalid metadata boundary')
+            meta={}
+            for line in header.splitlines():
+                key,separator,value=line.partition(': ')
+                if not separator or not key or not value or key in meta:raise ValueError('comparison reader invalid metadata')
+                meta[key]=value
+            if meta.get('date')!=comparison['date'] or not meta.get('title'):raise ValueError('comparison reader date or title invalid')
+            body=body.lstrip('\n')
+            if not body.startswith('# ') or body.splitlines()[0][2:]!=meta['title']:raise ValueError('comparison reader title differs from body')
+            seen_files.add(variant['file']);seen_slugs.add(variant['slug'])
+            result.append({**comparison,'label':variant['label'],'slug':variant['slug'],'file':variant['file'],'reader_title':meta['title'],'body':body})
+    return sorted(result,key=lambda item:(item['date'],item['id'],item['label']),reverse=True)
+COMPARISONS=comparisons()
 TOKEN=re.compile(r'`([^`]+)`|\[([^\]]+)\]\(([^\s)]+)\)|\*\*(.+?)\*\*')
 def inline(text):
     out=[];pos=0
@@ -118,6 +154,16 @@ def build():
         heading=e['title']
         body='<main id="main"><header class="article-head"><h1>'+html.escape(heading)+'</h1></header><div class="read-layout"><article class="prose">'+content+'</article><aside class="toc" aria-label="Оглавление">'+contents+'</aside></div><div class="after-reading"><a href="archive.html">Другие выпуски →</a><a href="#main">К началу ↑</a></div></main>'
         (OUT/(e['slug']+'.html')).write_text(frame(e['title'],e['subtitle'],body,e['slug']+'.html'))
+    if COMPARISONS:
+        rows=[]
+        for item in COMPARISONS:
+            content,toc=markdown(item['body'])
+            contents='<details open><summary>В этом варианте</summary><ol>'+''.join('<li><a href="#'+a+'">'+html.escape(t)+'</a></li>' for a,t in toc)+'</ol></details>'
+            body='<main id="main"><header class="article-head"><p class="eyebrow">Слепое сравнение · вариант '+item['label']+'</p><h1>'+html.escape(item['reader_title'])+'</h1></header><div class="read-layout"><article class="prose">'+content+'</article><aside class="toc" aria-label="Оглавление">'+contents+'</aside></div><div class="after-reading"><a href="comparisons.html">Все варианты сравнения →</a><a href="#main">К началу ↑</a></div></main>'
+            (OUT/(item['slug']+'.html')).write_text(frame(item['reader_title'],'Слепой вариант для сравнения редакционных решений.',body,item['slug']+'.html'))
+            rows.append('<article class="edition"><div class="eyebrow">Слепое сравнение <span>'+html.escape(item['date'])+'</span></div><h2><a href="'+item['slug']+'.html">Вариант '+item['label']+'</a></h2><p>'+html.escape(item['reader_title'])+'</p><div class="edition-bottom"><span>Не является обычным выпуском</span><a class="read" href="'+item['slug']+'.html">Читать <span aria-hidden="true">↗</span></a></div></article>')
+        comparison_index='<main id="main" class="home"><div class="intro compact"><p class="eyebrow">Сравнение вариантов</p><h1>Слепое A/B-сравнение</h1><p>Два варианта показываются отдельно для выбора; они не добавлены в обычную ленту выпусков.</p></div><section class="editions" aria-label="Варианты сравнения">'+''.join(rows)+'</section></main>'
+        (OUT/'comparisons.html').write_text(frame('Сравнение вариантов','Два слепых варианта редакционного выпуска для выбора.',comparison_index,'comparisons.html'))
     (OUT/'.nojekyll').write_text('')
     (OUT/'404.html').write_text(frame('Страница не найдена','Вернитесь к выпускам.', '<main id="main" class="home"><h1>Такой страницы нет</h1><p><a href="archive.html">Открыть архив выпусков</a></p></main>','404.html'))
     print('Built',len(EDITIONS),'editions and home/archive into _site')
