@@ -67,10 +67,11 @@ def check():
             assert item['slug']+'.html' in pages['comparisons.html'].links,item['slug']
             assert item['slug']+'.html' not in pages['index.html'].links,item['slug']
             assert item['slug']+'.html' not in pages['archive.html'].links,item['slug']
-    archive=json.loads((ROOT/'content/findings.json').read_text())
-    assert len(archive['findings'])==646
-    assert (OUT/'findings.html').read_text().count('class="finding"')==646
-    assert len({x['number'] for x in archive['findings']})==646
+    from archive_page import findings
+    rows=findings(EDITIONS)
+    assert rows and len({x['url'] for x in rows})==len(rows)
+    assert (OUT/'findings.html').read_text().count('class="finding"')==len(rows)
+    assert all(x['edition']+'.html' in pages for x in rows)
     forbidden=r'n8n-ai-digest|/Users/|runtime/monthly|material_id|unit_id|record_hash|github_pat_|ghp_[A-Za-z0-9]{20}|BEGIN .*PRIVATE KEY'
     for folder in [ROOT/'content',OUT]:
         for f in folder.rglob('*'):
