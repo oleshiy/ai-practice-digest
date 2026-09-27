@@ -53,7 +53,7 @@ def check():
                 assert page.items==e['count']+e.get('shorts',0),(e['slug'],page.items,e['count'])
         raw=e['body']
         nonempty=[line for line in raw.splitlines() if line.strip()]
-        assert nonempty[0].startswith('# ') and nonempty[1].startswith('## '),e['slug']
+        assert nonempty[0].startswith('# ') and (nonempty[1].startswith('## ') or e['type']=='weekly'),e['slug']  # a weekly may open with a lead paragraph
         source_links=re.findall(r'\]\((https?://[^\s)]+)\)',raw)
         assert all(u in page.links for u in source_links),e['slug']
         assert source_links and len(source_links)<=len(page.links)
