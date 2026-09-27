@@ -7,9 +7,9 @@ ROOT=Path(__file__).resolve().parent
 OUT=ROOT/'_site'
 BASE='https://oleshiy.github.io/ai-practice-digest/'
 REQUIRED={'date','type','title'}
-TYPES={'daily','last10','last30','top30'}
-LABELS={'daily':'Суточный выпуск','last10':'10 суток','last30':'30 суток','top30':'Топ-подборка'}
-TYPE_ORDER={'daily':4,'top30':3,'last10':2,'last30':1}
+TYPES={'daily','weekly','last10','last30','top30'}
+LABELS={'daily':'Суточный выпуск','weekly':'Недельный выпуск','last10':'10 суток','last30':'30 суток','top30':'Топ-подборка'}
+TYPE_ORDER={'weekly':5,'daily':4,'top30':3,'last10':2,'last30':1}
 def releases():
     result=[];slugs=set()
     for source in sorted((ROOT/'content').glob('*.md')):
