@@ -50,7 +50,7 @@ def comparisons():
     manifest_path=ROOT/'comparisons'/'published.json'
     if not manifest_path.exists():return []
     manifest=json.loads(manifest_path.read_text())
-    if set(manifest)!={'schema_version','comparisons'} or manifest['schema_version']!=1 or not isinstance(manifest['comparisons'],list) or len(manifest['comparisons'])!=1:raise ValueError('comparison manifest must allowlist exactly one A/B pair')
+    if set(manifest)!={'schema_version','comparisons'} or manifest['schema_version']!=1 or not isinstance(manifest['comparisons'],list) or not manifest['comparisons']:raise ValueError('comparison manifest must allowlist at least one A/B pair')
     result=[];seen_files=set();seen_slugs=set()
     for comparison in manifest['comparisons']:
         if set(comparison)!={'id','date','title','variants'} or not isinstance(comparison['variants'],list) or len(comparison['variants'])!=2:raise ValueError('invalid comparison entry')

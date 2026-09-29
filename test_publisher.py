@@ -52,5 +52,5 @@ with tempfile.TemporaryDirectory() as temp:
     manifest['comparisons'].append(manifest['comparisons'][0])
     manifest_path.write_text(json.dumps(manifest,ensure_ascii=False))
     rejected=subprocess.run([sys.executable,'build.py'],cwd=checkout,capture_output=True,text=True)
-    assert rejected.returncode!=0 and 'exactly one A/B pair' in rejected.stderr
+    assert rejected.returncode!=0 and 'not uniquely allowlisted' in rejected.stderr
 print('PASS: minimal one-file metadata and invalid metadata rejection')

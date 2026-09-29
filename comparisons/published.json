@@ -17,6 +17,23 @@
           "slug": "comparison-2026-09-14-blind-b"
         }
       ]
+    },
+    {
+      "id": "2026-09-27-ab",
+      "date": "2026-09-27",
+      "title": "Один пакет и один промпт, два автора",
+      "variants": [
+        {
+          "label": "A",
+          "file": "2026-09-27-blind-a.md",
+          "slug": "comparison-2026-09-27-blind-a"
+        },
+        {
+          "label": "B",
+          "file": "2026-09-27-blind-b.md",
+          "slug": "comparison-2026-09-27-blind-b"
+        }
+      ]
     }
   ]
 }
