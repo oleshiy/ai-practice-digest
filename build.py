@@ -28,6 +28,7 @@ def releases():
         try:date.fromisoformat(meta['date'])
         except ValueError:raise ValueError(f'{source.name}: invalid date')
         if 'count' in meta and (not meta['count'].isdigit() or int(meta['count'])<1):raise ValueError(f'{source.name}: invalid count')
+        if 'navigation' in meta and meta['navigation']!='top':raise ValueError(f'{source.name}: invalid navigation')
         slug=source.stem
         if not re.fullmatch(r'\d{4}-\d{2}-\d{2}-[a-z0-9-]+',slug) or slug in slugs:raise ValueError(f'{source.name}: invalid or duplicate slug')
         slugs.add(slug)
@@ -152,7 +153,12 @@ def build():
         content,toc=markdown(e['body'])
         contents='<details open><summary>В этом выпуске</summary><ol>'+''.join('<li><a href="#'+a+'">'+html.escape(t)+'</a></li>' for a,t in toc)+'</ol></details>'
         heading=e['title']
-        body='<main id="main"><header class="article-head"><h1>'+html.escape(heading)+'</h1></header><div class="read-layout"><article class="prose">'+content+'</article><aside class="toc" aria-label="Оглавление">'+contents+'</aside></div><div class="after-reading"><a href="archive.html">Другие выпуски →</a><a href="#main">К началу ↑</a></div></main>'
+        article='<article class="prose">'+content+'</article>'
+        navigation='<aside class="toc" aria-label="Оглавление">'+contents+'</aside>'
+        navigation_top=e.get('navigation')=='top'
+        layout_class='read-layout navigation-top' if navigation_top else 'read-layout'
+        reading=navigation+article if navigation_top else article+navigation
+        body='<main id="main"><header class="article-head"><h1>'+html.escape(heading)+'</h1></header><div class="'+layout_class+'">'+reading+'</div><div class="after-reading"><a href="archive.html">Другие выпуски →</a><a href="#main">К началу ↑</a></div></main>'
         (OUT/(e['slug']+'.html')).write_text(frame(e['title'],e['subtitle'],body,e['slug']+'.html'))
     if COMPARISONS:
         rows=[]
