@@ -21,6 +21,7 @@ jobs:
           node test_archive.js
           node test_releases.js
           python3 test_publisher.py
+          python3 test_thematic.py
       - uses: actions/upload-pages-artifact@v4
         with:
           path: _site

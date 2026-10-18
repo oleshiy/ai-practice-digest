@@ -21,6 +21,35 @@ class Page(HTMLParser):
     def handle_endtag(self,tag):
         if tag=='article':self.prose=False
 
+def check_thematic(edition,page):
+    """Thematic weeks use H3 scenarios, a practical section and one complete source list."""
+    raw=edition['body'];practice='## Что из этого применить в платформе';complete='## Все находки выпуска'
+    assert raw.count(practice)==1 and raw.count(complete)==1, 'thematic practice and source list required'
+    topics,tail=raw.split(practice,1)
+    practice_body,listed=tail.split(complete,1)
+    assert practice_body.strip(), 'thematic practice is empty'
+    expected=[]
+    for fragment in re.split(r'(?m)(?=^### )',topics):
+        if not fragment.startswith('### '):continue
+        fragment=fragment.split('\n## ',1)[0]
+        heading=fragment.splitlines()[0][4:]
+        title=re.sub(r'\[([^]]+)\]\([^)]+\)',r'\1',heading)
+        urls=list(dict.fromkeys(re.findall(r'\]\((https?://[^\s)]+)\)',fragment)))
+        assert urls, ('thematic topic has no source',title)
+        expected.append((title,urls))
+    actual=[]
+    for line in listed.splitlines():
+        if not re.match(r'^\d+\. ',line):continue
+        links=re.findall(r'\[([^]]+)\]\((https?://[^\s)]+)\)',line)
+        assert links, 'thematic list entry has no source'
+        actual.append((links[0][0],[url for _,url in links]))
+    assert expected==actual, ('thematic source list differs from topics',edition['slug'])
+    assert len({title for title,_ in expected})==len(expected), 'thematic duplicate topic'
+    assert len(expected)==edition['count'], 'thematic topic count differs'
+    assert page.sections==edition['sections'], 'thematic section count differs'
+    if 'details' in edition and 'shorts' in edition:
+        assert edition['details']+edition['shorts']==edition['count'], 'thematic depth counts differ'
+
 def check():
     from build import markdown,BASE,EDITIONS,COMPARISONS
     sample='# Выпуск\n\n## Материал\n\n1. [Первый](https://example.com/one)\n\n    Первый абзац.\n\n    Второй абзац.\n\n2. [Второй](https://example.com/two)\n\n    Текст.\n\nКонечная статистика.\n'
@@ -45,6 +74,8 @@ def check():
         if e['type']=='daily':
             if 'sections' in e:assert page.sections==e['sections'],(e['slug'],page.sections,e['sections'])
             assert page.items==0,(e['slug'],page.items)
+        elif 'sections' in e:
+            check_thematic(e,page)
         else:
             if 'details' in e:
                 expected=e['details']+2*(e['type']!='top30')
@@ -53,7 +84,7 @@ def check():
                 assert page.items==e['count']+e.get('shorts',0),(e['slug'],page.items,e['count'])
         raw=e['body']
         nonempty=[line for line in raw.splitlines() if line.strip()]
-        assert nonempty[0].startswith('# ') and nonempty[1].startswith('## '),e['slug']
+        assert nonempty[0].startswith('# ') and (nonempty[1].startswith('## ') or e['type']!='daily' and 'sections' in e and nonempty[1].startswith('### ')),e['slug']
         source_links=re.findall(r'\]\((https?://[^\s)]+)\)',raw)
         assert all(u in page.links for u in source_links),e['slug']
         assert source_links and len(source_links)<=len(page.links)
