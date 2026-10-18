@@ -29,6 +29,7 @@ def releases():
         except ValueError:raise ValueError(f'{source.name}: invalid date')
         if 'count' in meta and (not meta['count'].isdigit() or int(meta['count'])<1):raise ValueError(f'{source.name}: invalid count')
         if 'navigation' in meta and meta['navigation']!='top':raise ValueError(f'{source.name}: invalid navigation')
+        if 'toc' in meta and meta['toc']!='plain':raise ValueError(f'{source.name}: invalid toc')
         slug=source.stem
         if not re.fullmatch(r'\d{4}-\d{2}-\d{2}-[a-z0-9-]+',slug) or slug in slugs:raise ValueError(f'{source.name}: invalid or duplicate slug')
         slugs.add(slug)
@@ -94,6 +95,10 @@ def inline(text):
         else:out.append('<strong>'+inline(m.group(4))+'</strong>')
         pos=m.end()
     return ''.join(out)+html.escape(text[pos:])
+def plain_inline(text):
+    """Keep visible heading labels without links or inline Markdown markers."""
+    return TOKEN.sub(lambda m:m.group(1) if m.group(1) is not None else plain_inline(m.group(2) if m.group(2) is not None else m.group(4)),text)
+
 def markdown(text):
     """Render paragraphs and numbered entries with indented continuation paragraphs."""
     blocks=[];toc=[];lines=text.splitlines();i=0;heading=0
@@ -151,7 +156,7 @@ def build():
     (OUT/'archive.html').write_text(frame('Архив','Все опубликованные выпуски «Практики ИИ».',archive,'archive.html'))
     for e in EDITIONS:
         content,toc=markdown(e['body'])
-        contents='<details open><summary>В этом выпуске</summary><ol>'+''.join('<li><a href="#'+a+'">'+html.escape(t)+'</a></li>' for a,t in toc)+'</ol></details>'
+        contents='<details open><summary>В этом выпуске</summary><ol>'+''.join('<li><a href="#'+a+'">'+html.escape(plain_inline(t) if e.get('toc')=='plain' else t)+'</a></li>' for a,t in toc)+'</ol></details>'
         heading=e['title']
         article='<article class="prose">'+content+'</article>'
         navigation='<aside class="toc" aria-label="Оглавление">'+contents+'</aside>'

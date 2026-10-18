@@ -13,6 +13,8 @@ class ReaderOrder(HTMLParser):
         self.order=[]
         self.links=[]
         self.headings=[]
+        self.toc_labels=[]
+        self.in_toc_link=False
         self.feed(text)
 
     def handle_starttag(self, tag, attributes):
@@ -21,8 +23,15 @@ class ReaderOrder(HTMLParser):
             self.order.append(tag)
         if tag=='a' and attributes.get('href','').startswith('#section-'):
             self.links.append(attributes['href'][1:])
+            self.in_toc_link=True
         if tag in ('h2','h3'):
             self.headings.append(attributes.get('id'))
+
+    def handle_endtag(self, tag):
+        if tag=='a':self.in_toc_link=False
+
+    def handle_data(self, text):
+        if self.in_toc_link:self.toc_labels.append(text)
 
 
 def build(checkout):
@@ -49,6 +58,16 @@ with tempfile.TemporaryDirectory() as temp:
     assert reader.links==reader.headings==['section-1','section-2'], 'navigation must retain all section targets'
     for slug,content in prior.items():
         assert (checkout/'_site'/(slug+'.html')).read_bytes()==content, f'prior edition changed: {slug}'
+    linked_body=body+'\n### [Третья `тема` и **пример**](https://example.com/long-source-url)\n\nМатериал.\n'
+    source.write_text(header+'navigation: top\ntoc: plain\n'+linked_body)
+    build(checkout)
+    rendered=output.read_text()
+    reader=ReaderOrder(rendered)
+    assert reader.links==reader.headings==['section-1','section-2','section-3'], 'linked heading must retain its anchor'
+    assert reader.toc_labels==['Первая тема','Вторая тема','Третья тема и пример'], 'TOC must contain labels, without raw Markdown or source URLs'
+    assert '<h3 id="section-3"><a href="https://example.com/long-source-url">' in rendered, 'source link must remain in article heading'
+    for slug,content in prior.items():
+        assert (checkout/'_site'/(slug+'.html')).read_bytes()==content, f'prior edition changed by TOC labels: {slug}'
     source.write_text(header+'navigation: typo\n'+body)
     rejected=subprocess.run([sys.executable,'build.py'],cwd=checkout,capture_output=True,text=True)
     assert rejected.returncode!=0 and 'invalid navigation' in rejected.stderr, 'unsupported navigation accepted'
