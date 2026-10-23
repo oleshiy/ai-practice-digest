@@ -29,7 +29,7 @@ def releases():
         except ValueError:raise ValueError(f'{source.name}: invalid date')
         if 'count' in meta and (not meta['count'].isdigit() or int(meta['count'])<1):raise ValueError(f'{source.name}: invalid count')
         if 'navigation' in meta and meta['navigation']!='top':raise ValueError(f'{source.name}: invalid navigation')
-        if 'toc' in meta and meta['toc']!='plain':raise ValueError(f'{source.name}: invalid toc')
+        if 'toc' in meta and meta['toc'] not in ('plain','sections'):raise ValueError(f'{source.name}: invalid toc')
         slug=source.stem
         if not re.fullmatch(r'\d{4}-\d{2}-\d{2}-[a-z0-9-]+',slug) or slug in slugs:raise ValueError(f'{source.name}: invalid or duplicate slug')
         slugs.add(slug)
@@ -99,7 +99,7 @@ def plain_inline(text):
     """Keep visible heading labels without links or inline Markdown markers."""
     return TOKEN.sub(lambda m:m.group(1) if m.group(1) is not None else plain_inline(m.group(2) if m.group(2) is not None else m.group(4)),text)
 
-def markdown(text):
+def markdown(text,*,toc_sections=False):
     """Render paragraphs and numbered entries with indented continuation paragraphs."""
     blocks=[];toc=[];lines=text.splitlines();i=0;heading=0
     while i<len(lines):
@@ -110,7 +110,8 @@ def markdown(text):
             i+=1
             if len(h[1])==1:continue
             heading+=1;anchor='section-'+str(heading);title=h[2]
-            toc.append((anchor,title));blocks.append(f'<h{len(h[1])} id="{anchor}">'+inline(title)+f'</h{len(h[1])}>');continue
+            if not toc_sections or len(h[1])==2:toc.append((anchor,title))
+            blocks.append(f'<h{len(h[1])} id="{anchor}">'+inline(title)+f'</h{len(h[1])}>');continue
         li=re.match(r'^(\d+\.|-) (.+)',line)
         if li:
             tag='ul' if li[1]=='-' else 'ol';blocks.append('<'+tag+'>')
@@ -155,8 +156,8 @@ def build():
     archive='<main id="main" class="home"><div class="intro compact"><p class="eyebrow">Все выпуски</p><h1>Архив выпусков</h1><p>У каждого выпуска своё окно отбора. Находки в разных выпусках могут пересекаться. Остальное полезное — в <a href="findings.html">архиве с поиском</a>.</p></div><section class="editions" aria-label="Архив выпусков">'+cards+'</section></main>'
     (OUT/'archive.html').write_text(frame('Архив','Все опубликованные выпуски «Практики ИИ».',archive,'archive.html'))
     for e in EDITIONS:
-        content,toc=markdown(e['body'])
-        contents='<details open><summary>В этом выпуске</summary><ol>'+''.join('<li><a href="#'+a+'">'+html.escape(plain_inline(t) if e.get('toc')=='plain' else t)+'</a></li>' for a,t in toc)+'</ol></details>'
+        content,toc=markdown(e['body'],toc_sections=e.get('toc')=='sections')
+        contents='<details open><summary>В этом выпуске</summary><ol>'+''.join('<li><a href="#'+a+'">'+html.escape(plain_inline(t) if e.get('toc') in ('plain','sections') else t)+'</a></li>' for a,t in toc)+'</ol></details>'
         heading=e['title']
         article='<article class="prose">'+content+'</article>'
         navigation='<aside class="toc" aria-label="Оглавление">'+contents+'</aside>'

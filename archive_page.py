@@ -1,8 +1,9 @@
 """Build the searchable archive of findings from the published editions themselves.
 
-Every H3 in an edition is one finding (title, source link, the paragraphs under it); one-line
+Every story H3 in an edition is one finding (title, source link, the paragraphs under it); one-line
 entries in «Остальное» count too. Nothing is stored separately: the archive is derived at build
 time, so a new edition appears here on the next Pages build without any extra step.
+With opt-in section navigation, H3 groups in the practical section are not findings.
 """
 import html,re
 from datetime import date,timedelta
@@ -19,6 +20,7 @@ def findings(editions):
         while i<len(lines):
             line=lines[i]
             if line.startswith('## '):section=line[3:].strip();i+=1;continue
+            if e.get('toc')=='sections' and section=='Что из этого применить в платформе':i+=1;continue
             title=url=None;body=[]
             if line.startswith('### '):
                 heading=line[4:].strip();m=LINK.fullmatch(heading)
