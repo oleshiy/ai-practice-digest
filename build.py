@@ -7,9 +7,9 @@ ROOT=Path(__file__).resolve().parent
 OUT=ROOT/'_site'
 BASE='https://oleshiy.github.io/ai-practice-digest/'
 REQUIRED={'date','type','title'}
-TYPES={'daily','weekly','last10','last30','top30'}
-LABELS={'daily':'Суточный выпуск','weekly':'Недельный выпуск','last10':'10 суток','last30':'30 суток','top30':'Топ-подборка'}
-TYPE_ORDER={'weekly':5,'daily':4,'top30':3,'last10':2,'last30':1}
+TYPES={'daily','weekly','last10','last30','top30','working'}
+LABELS={'daily':'Суточный выпуск','weekly':'Недельный выпуск','last10':'10 суток','last30':'30 суток','top30':'Топ-подборка','working':'Рабочая подборка'}
+TYPE_ORDER={'weekly':5,'daily':4,'top30':3,'last10':2,'last30':1,'working':0}
 def releases():
     result=[];slugs=set()
     for source in sorted((ROOT/'content').glob('*.md')):
@@ -105,10 +105,12 @@ def markdown(text,*,toc_sections=False):
     while i<len(lines):
         line=lines[i]
         if not line.strip():i+=1;continue
-        h=re.match(r'^(#{1,3}) (.+)',line)
+        h=re.match(r'^(#{1,4}) (.+)',line)
         if h:
             i+=1
             if len(h[1])==1:continue
+            if len(h[1])==4:
+                blocks.append('<h4>'+inline(h[2])+'</h4>');continue
             heading+=1;anchor='section-'+str(heading);title=h[2]
             if not toc_sections or len(h[1])==2:toc.append((anchor,title))
             blocks.append(f'<h{len(h[1])} id="{anchor}">'+inline(title)+f'</h{len(h[1])}>');continue
@@ -129,7 +131,7 @@ def markdown(text,*,toc_sections=False):
                 if i>=len(lines) or not re.match(r'^(\d+\.|-) (.+)',lines[i]):break
             blocks.append('</'+tag+'>');continue
         para=[]
-        while i<len(lines) and lines[i].strip() and not re.match(r'^(#{1,3} |\d+\. |- )',lines[i]):
+        while i<len(lines) and lines[i].strip() and not re.match(r'^(#{1,4} |\d+\. |- )',lines[i]):
             para.append(lines[i].strip());i+=1
         blocks.append('<p>'+inline(' '.join(para))+'</p>')
     return '\n'.join(blocks),toc
@@ -164,7 +166,8 @@ def build():
         navigation_top=e.get('navigation')=='top'
         layout_class='read-layout navigation-top' if navigation_top else 'read-layout'
         reading=navigation+article if navigation_top else article+navigation
-        body='<main id="main"><header class="article-head"><h1>'+html.escape(heading)+'</h1></header><div class="'+layout_class+'">'+reading+'</div><div class="after-reading"><a href="archive.html">Другие выпуски →</a><a href="#main">К началу ↑</a></div></main>'
+        working_label='<p class="eyebrow">Рабочая подборка</p>' if e['type']=='working' else ''
+        body='<main id="main"><header class="article-head">'+working_label+'<h1>'+html.escape(heading)+'</h1></header><div class="'+layout_class+'">'+reading+'</div><div class="after-reading"><a href="archive.html">Другие выпуски →</a><a href="#main">К началу ↑</a></div></main>'
         (OUT/(e['slug']+'.html')).write_text(frame(e['title'],e['subtitle'],body,e['slug']+'.html'))
     if COMPARISONS:
         rows=[]

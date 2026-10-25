@@ -27,8 +27,8 @@ def findings(editions):
                 if m:title,url=m.group(1),m.group(2)
                 else:title=heading
                 i+=1
-                while i<len(lines) and not lines[i].startswith('#'):
-                    if lines[i].strip():body.append(lines[i].strip())
+                while i<len(lines) and not re.match(r'^#{1,3} ',lines[i]):
+                    if lines[i].strip():body.append(lines[i][5:].strip() if lines[i].startswith('#### ') else lines[i].strip())
                     i+=1
                 if url is None:
                     found=LINK.search(' '.join(body));url=found.group(2) if found else None
