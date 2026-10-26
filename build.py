@@ -1,6 +1,7 @@
 """Build a small static reading site from the approved Markdown editions."""
 from pathlib import Path
 import html,json,re,shutil
+from hashlib import sha256
 from datetime import date
 from urllib.parse import urlsplit
 ROOT=Path(__file__).resolve().parent
@@ -123,7 +124,7 @@ def markdown(text,*,toc_sections=False):
             caption=inline(lines[i+1][len('Подпись: '):])
             if not caption.strip():raise ValueError('Figure caption must not be empty')
             safe_url=html.escape(url,quote=True)
-            blocks.append('<figure class="editorial-figure"><a href="'+safe_url+'"><img src="'+safe_url+'" alt="'+html.escape(alt,quote=True)+'" loading="lazy" decoding="async"></a><figcaption>'+caption+' <a class="full-image" href="'+safe_url+'">Открыть в полном размере</a></figcaption></figure>')
+            blocks.append('<figure class="editorial-figure"><a href="'+safe_url+'"><img src="'+safe_url+'" alt="'+html.escape(alt,quote=True)+'" loading="lazy" decoding="async" style="max-width:100%;height:auto"></a><figcaption>'+caption+' <a class="full-image" href="'+safe_url+'">Открыть в полном размере</a></figcaption></figure>')
             i+=2;continue
         h=re.match(r'^(#{1,4}) (.+)',line)
         if h:
@@ -157,7 +158,8 @@ def markdown(text,*,toc_sections=False):
     return '\n'.join(blocks),toc
 
 def frame(title,description,body,path):
-    return '<!doctype html>\n<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+html.escape(title)+' · Практики ИИ</title><meta name="description" content="'+html.escape(description,quote=True)+'"><meta name="color-scheme" content="light"><meta property="og:type" content="article"><meta property="og:locale" content="ru_RU"><meta property="og:title" content="'+html.escape(title,quote=True)+'"><meta property="og:description" content="'+html.escape(description,quote=True)+'"><meta property="og:url" content="'+BASE+path+'"><link rel="canonical" href="'+BASE+path+'"><link rel="icon" type="image/png" sizes="16x16" href="'+BASE+'assets/favicon-16.png"><link rel="icon" type="image/png" sizes="32x32" href="'+BASE+'assets/favicon-32.png"><link rel="stylesheet" href="assets/style.css"><script defer src="assets/releases.js"></script></head><body><a class="skip" href="#main">Перейти к содержанию</a><header class="masthead"><a class="brand" href="index.html">Практики <span>ИИ</span></a><nav aria-label="Главная навигация"><a href="archive.html">Выпуски</a><a href="findings.html">Все находки</a><a href="https://github.com/oleshiy/ai-practice-digest">GitHub</a></nav></header>'+body+'<footer><a href="index.html">Практики ИИ</a><p>Опыт компаний, исследования и ограничения. Пересказы со ссылками на источники.</p><a href="archive.html">Все выпуски →</a></footer></body></html>\n'
+    style_version=sha256((ROOT/"assets/style.css").read_bytes()).hexdigest()[:12]
+    return '<!doctype html>\n<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+html.escape(title)+' · Практики ИИ</title><meta name="description" content="'+html.escape(description,quote=True)+'"><meta name="color-scheme" content="light"><meta property="og:type" content="article"><meta property="og:locale" content="ru_RU"><meta property="og:title" content="'+html.escape(title,quote=True)+'"><meta property="og:description" content="'+html.escape(description,quote=True)+'"><meta property="og:url" content="'+BASE+path+'"><link rel="canonical" href="'+BASE+path+'"><link rel="icon" type="image/png" sizes="16x16" href="'+BASE+'assets/favicon-16.png"><link rel="icon" type="image/png" sizes="32x32" href="'+BASE+'assets/favicon-32.png"><link rel="stylesheet" href="assets/style.css?v='+style_version+'"><script defer src="assets/releases.js"></script></head><body><a class="skip" href="#main">Перейти к содержанию</a><header class="masthead"><a class="brand" href="index.html">Практики <span>ИИ</span></a><nav aria-label="Главная навигация"><a href="archive.html">Выпуски</a><a href="findings.html">Все находки</a><a href="https://github.com/oleshiy/ai-practice-digest">GitHub</a></nav></header>'+body+'<footer><a href="index.html">Практики ИИ</a><p>Опыт компаний, исследования и ограничения. Пересказы со ссылками на источники.</p><a href="archive.html">Все выпуски →</a></footer></body></html>\n'
 
 def card(e):
     summary=(str(e['count'])+' находок · ' if e['count'] is not None else '')+html.escape(e['window'])

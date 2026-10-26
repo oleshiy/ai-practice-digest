@@ -1,6 +1,7 @@
 """Figures retain attribution and cannot introduce active content or escape assets."""
 import unittest
 import tempfile
+import hashlib
 from pathlib import Path
 from unittest.mock import patch
 import build
@@ -11,6 +12,7 @@ class Figures(unittest.TestCase):
     def test_figure_with_escaped_alt_and_caption(self):
         result,toc=build.markdown('![Слой "памяти" <script> &](%s)\nПодпись: <script>alert(1)</script> [Databricks](https://www.databricks.com/blog/memcurrent-designing-persistent-memory-production-agents)'%IMAGE)
         self.assertIn('<figure',result)
+        self.assertIn('style="max-width:100%;height:auto"',result)
         self.assertIn('alt="Слой &quot;памяти&quot; &lt;script&gt; &amp;"',result)
         self.assertIn('<figcaption>',result)
         self.assertIn('Открыть в полном размере',result)
@@ -27,6 +29,16 @@ class Figures(unittest.TestCase):
             (root/'assets'/'bad.png').write_text('<script>alert(1)</script>')
             with patch.object(build,'ROOT',root),self.assertRaises(ValueError):
                 build.figure_asset('assets/bad.png')
+    def test_stylesheet_url_tracks_its_content(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);(root/'assets').mkdir()
+            css=root/'assets/style.css'
+            with patch.object(build,'ROOT',root):
+                for contents in ['body{color:red}', 'body{color:blue}']:
+                    css.write_text(contents)
+                    digest=hashlib.sha256(contents.encode()).hexdigest()[:12]
+                    rendered=build.frame('Title','Description','Body','test.html')
+                    self.assertIn('href="assets/style.css?v='+digest+'"',rendered)
     def test_archive_omits_figure_syntax(self):
         result=findings([{'date':'2026-10-25','slug':'test','title':'test','body':'### Title\n![Фото](%s)\nПодпись: [Image credit](https://wrong.example)\nText.\nИсточник: [Article](https://correct.example)'%IMAGE}])
         self.assertEqual(result[0]['url'],'https://correct.example')
