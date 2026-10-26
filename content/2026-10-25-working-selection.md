@@ -45,7 +45,7 @@ Claude Code читает код системы и предлагает для к
 ![Схема Anthropic: многоступенчатая оркестрация и основной цикл модели с инструментами и защитными проверками](assets/anthropic-single-agent-loop.png)
 Подпись: На схеме [Anthropic](https://claude.com/resources/articles/building-agents-when-to-fold-subagents-into-your-main-agent-loop) один цикл заменяет несколько слоёв маршрутизации, а инструменты и защитные проверки остаются. Указанные четыре-пять инструментов — пример устройства, не универсальный лимит.
 
-Это неподдерживаемая эталонная реализация. На настоящей модели авторы выполнили лишь два прогона учебного примера — одним человеком на одной модели; остальные сценарии миграции пока не подтверждены таким опытом.
+Авторы публикуют kit как пример реализации и не обещают его поддержку. На настоящей модели авторы выполнили лишь два прогона учебного примера — одним человеком на одной модели; остальные сценарии миграции пока не подтверждены таким опытом.
 
 Источники: [Anthropic — Single agent loop kit](https://github.com/anthropics/single-agent-loop-kit), [When to fold subagents into your main agent loop](https://claude.com/resources/articles/building-agents-when-to-fold-subagents-into-your-main-agent-loop).
 
