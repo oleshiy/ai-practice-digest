@@ -23,6 +23,7 @@ jobs:
           python3 test_publisher.py
           python3 test_thematic.py
           python3 test_working.py
+          python3 test_figures.py
       - uses: actions/upload-pages-artifact@v4
         with:
           path: _site

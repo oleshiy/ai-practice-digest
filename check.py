@@ -7,13 +7,14 @@ ROOT=Path(__file__).resolve().parent
 OUT=ROOT/'_site'
 class Page(HTMLParser):
     def __init__(self,text):
-        super().__init__(convert_charrefs=True);self.links=[];self.ids=set();self.prose=False;self.items=0;self.sections=0;self.viewport=False;self.icons=[];self.feed(text)
+        super().__init__(convert_charrefs=True);self.links=[];self.ids=set();self.prose=False;self.items=0;self.sections=0;self.viewport=False;self.icons=[];self.images=[];self.feed(text)
     def handle_starttag(self,tag,attrs):
         a=dict(attrs)
         if 'id' in a:
             assert a['id'] not in self.ids,'Duplicate anchor';self.ids.add(a['id'])
         if tag=='a' and 'href' in a:self.links.append(a['href'])
         if tag=='link' and a.get('rel')=='icon':self.icons.append(a)
+        if tag=='img':self.images.append(a)
         if tag=='article' and a.get('class')=='prose':self.prose=True
         if self.prose and tag=='li':self.items+=1
         if self.prose and tag=='h2':self.sections+=1
@@ -34,6 +35,7 @@ def check_thematic(edition,page):
         fragment=fragment.split('\n## ',1)[0]
         heading=fragment.splitlines()[0][4:]
         title=re.sub(r'\[([^]]+)\]\([^)]+\)',r'\1',heading)
+        fragment='\n'.join(line for line in fragment.splitlines() if not line.startswith(('![','Подпись: ')))
         urls=list(dict.fromkeys(re.findall(r'\]\((https?://[^\s)]+)\)',fragment)))
         assert urls, ('thematic topic has no source',title)
         expected.append((title,urls))
@@ -51,7 +53,7 @@ def check_thematic(edition,page):
         assert edition['details']+edition['shorts']==edition['count'], 'thematic depth counts differ'
 
 def check():
-    from build import markdown,BASE,EDITIONS,COMPARISONS
+    from build import markdown,BASE,EDITIONS,COMPARISONS,FIGURE,figure_asset
     sample='# Выпуск\n\n## Материал\n\n1. [Первый](https://example.com/one)\n\n    Первый абзац.\n\n    Второй абзац.\n\n2. [Второй](https://example.com/two)\n\n    Текст.\n\nКонечная статистика.\n'
     rendered,_=markdown(sample)
     assert rendered.count('<ol>')==1 and rendered.count('<li>')==2
@@ -62,11 +64,18 @@ def check():
     for name,page in pages.items():
         assert page.viewport and 'main' in page.ids,name
         assert page.icons==[{'rel':'icon','type':'image/png','sizes':f'{size}x{size}','href':BASE+f'assets/favicon-{size}.png'} for size in (16,32)],name
+        for image in page.images:
+            src=image.get('src','')
+            assert FIGURE.fullmatch('![image]('+src+')') and image.get('alt'),(name,image)
+            original=figure_asset(src);assert (OUT/src).read_bytes()==original.read_bytes(),(name,src)
         for link in page.links:
             u=urlsplit(link)
             if u.scheme:
                 assert u.scheme in ('https','http') and u.netloc and not u.username,link
             else:
+                if FIGURE.fullmatch('![image]('+link+')'):
+                    assert (OUT/link).is_file(),(name,link)
+                    continue
                 target=u.path or name;assert target in pages,(name,link)
                 if u.fragment:assert unquote(u.fragment) in pages[target].ids,(name,link)
     for e in EDITIONS:

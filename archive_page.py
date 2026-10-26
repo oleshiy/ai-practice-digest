@@ -28,6 +28,7 @@ def findings(editions):
                 else:title=heading
                 i+=1
                 while i<len(lines) and not re.match(r'^#{1,3} ',lines[i]):
+                    if lines[i].startswith(('![','Подпись: ')):i+=1;continue
                     if lines[i].strip():body.append(lines[i][5:].strip() if lines[i].startswith('#### ') else lines[i].strip())
                     i+=1
                 if url is None:

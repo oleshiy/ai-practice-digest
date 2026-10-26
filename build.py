@@ -99,12 +99,32 @@ def plain_inline(text):
     """Keep visible heading labels without links or inline Markdown markers."""
     return TOKEN.sub(lambda m:m.group(1) if m.group(1) is not None else plain_inline(m.group(2) if m.group(2) is not None else m.group(4)),text)
 
+FIGURE=re.compile(r'!\[([^\]\n]+)\]\((assets/[a-z0-9][a-z0-9_-]*\.png)\)')
+def figure_asset(url):
+    source=ROOT/url
+    if not source.is_file() or source.is_symlink() or source.resolve().parent!=(ROOT/'assets').resolve():
+        raise ValueError('Figure must reference an existing local asset')
+    with source.open("rb") as stream:header=stream.read(24)
+    if header[:8]!=b"\x89PNG\r\n\x1a\n" or header[12:16]!=b"IHDR" or not all(int.from_bytes(header[n:n+4],"big")>0 for n in (16,20)):
+        raise ValueError("Figure asset must be a PNG image")
+    return source
+
 def markdown(text,*,toc_sections=False):
     """Render paragraphs and numbered entries with indented continuation paragraphs."""
     blocks=[];toc=[];lines=text.splitlines();i=0;heading=0
     while i<len(lines):
         line=lines[i]
         if not line.strip():i+=1;continue
+        if line.startswith('!['):
+            image=FIGURE.fullmatch(line)
+            if not image or i+1>=len(lines) or not lines[i+1].startswith('Подпись: '):
+                raise ValueError('Figure requires a safe local asset, alt text and caption')
+            alt,url=image.groups();figure_asset(url)
+            caption=inline(lines[i+1][len('Подпись: '):])
+            if not caption.strip():raise ValueError('Figure caption must not be empty')
+            safe_url=html.escape(url,quote=True)
+            blocks.append('<figure class="editorial-figure"><a href="'+safe_url+'"><img src="'+safe_url+'" alt="'+html.escape(alt,quote=True)+'" loading="lazy" decoding="async"></a><figcaption>'+caption+' <a class="full-image" href="'+safe_url+'">Открыть в полном размере</a></figcaption></figure>')
+            i+=2;continue
         h=re.match(r'^(#{1,4}) (.+)',line)
         if h:
             i+=1
@@ -131,7 +151,7 @@ def markdown(text,*,toc_sections=False):
                 if i>=len(lines) or not re.match(r'^(\d+\.|-) (.+)',lines[i]):break
             blocks.append('</'+tag+'>');continue
         para=[]
-        while i<len(lines) and lines[i].strip() and not re.match(r'^(#{1,4} |\d+\. |- )',lines[i]):
+        while i<len(lines) and lines[i].strip() and not re.match(r'^(#{1,4} |\d+\. |- |!\[)',lines[i]):
             para.append(lines[i].strip());i+=1
         blocks.append('<p>'+inline(' '.join(para))+'</p>')
     return '\n'.join(blocks),toc
@@ -150,6 +170,11 @@ def build():
     shutil.copyfile(ROOT/'assets/releases.js',OUT/'assets/releases.js')
     shutil.copyfile(ROOT/'assets/favicon-32.png',OUT/'assets/favicon-32.png')
     shutil.copyfile(ROOT/'assets/favicon-16.png',OUT/'assets/favicon-16.png')
+    for edition in EDITIONS:
+        for line in edition['body'].splitlines():
+            image=FIGURE.fullmatch(line)
+            if image:
+                source=figure_asset(image[2]);shutil.copyfile(source,OUT/image[2])
     from archive_page import render_archive
     (OUT/'findings.html').write_text(frame('Архив находок','Поиск по принятым материалам о практиках ИИ.',render_archive(EDITIONS,inline),'findings.html'))
     cards=''.join(card(e) for e in EDITIONS)
