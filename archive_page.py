@@ -34,9 +34,10 @@ def findings(editions):
                     if lines[i].strip():body.append(lines[i][5:].strip() if lines[i].startswith('#### ') else lines[i].strip())
                     i+=1
                 if url is None:
-                    found=LINK.search(' '.join(body));url=found.group(2) if found else None
-                    if url is None and provided_topic(e,title,body):
+                    if provided_topic(e,title,body):
                         url=e['slug']+'.html#section-'+str(anchor);provided=True
+                    else:
+                        found=LINK.search(' '.join(body));url=found.group(2) if found else None
                 body=[b for b in body if not (b.startswith('[') and LINK.fullmatch(b.split(' · ')[0]) and len(b)<120)]
             elif section=='Остальное' and LINK.match(line):
                 m=LINK.match(line);title,url=m.group(1),m.group(2);body=[line[m.end():].strip(' —-–.')];i+=1

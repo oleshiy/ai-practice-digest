@@ -3,7 +3,7 @@ from pathlib import Path
 from html.parser import HTMLParser
 from urllib.parse import urlsplit,unquote
 import json,re,struct
-from provided_source import provided_source,provided_topic,TITLE,NOTE
+from provided_source import provided_source,provided_topic,NOTE
 ROOT=Path(__file__).resolve().parent
 OUT=ROOT/'_site'
 class Page(HTMLParser):
@@ -39,19 +39,25 @@ def check_thematic(edition,page):
         title=re.sub(r'\[([^]]+)\]\([^)]+\)',r'\1',heading)
         fragment='\n'.join(line for line in fragment.splitlines() if not line.startswith(('![','Подпись: ')))
         urls=list(dict.fromkeys(re.findall(r'\]\((https?://[^\s)]+)\)',fragment)))
-        if not urls:
-            assert heading==title and provided_topic(edition,title,fragment.splitlines()), ('thematic topic has no source',title)
+        if allowed and title==allowed['title']:
+            assert heading==title and provided_topic(edition,title,fragment.splitlines()), ('provided topic differs from allowlist',title)
             provided_count+=1
+        else:assert urls, ('thematic topic has no source',title)
         expected.append((title,urls))
-    assert provided_count==int(allowed), 'provided source must identify exactly one topic'
-    actual=[]
+    assert provided_count==int(bool(allowed)), 'provided source must identify exactly one topic'
+    actual=[];provided_index_count=0
     for line in listed.splitlines():
         if not re.match(r'^\d+\. ',line):continue
         links=re.findall(r'\[([^]]+)\]\((https?://[^\s)]+)\)',line)
-        if links:actual.append((links[0][0],[url for _,url in links]))
+        if allowed and re.match(r'\d+\. '+re.escape(allowed['title']+'. '+NOTE),line):
+            suffix=r'(?: · \[[^\]\n]+\]\(https?://[^\s)]+\))'+('{'+str(len(allowed['urls']))+'}')
+            assert re.fullmatch(r'\d+\. '+re.escape(allowed['title']+'. '+NOTE)+suffix,line), 'provided index must keep plain title and exact source note'
+            assert [url for _,url in links]==allowed['urls'], 'provided index supplementary sources differ'
+            actual.append((allowed['title'],allowed['urls']));provided_index_count+=1
         else:
-            assert allowed and re.fullmatch(r'\d+\. '+re.escape(TITLE+'. '+NOTE),line), 'thematic list entry has no source'
-            actual.append((TITLE,[]))
+            assert links, 'thematic list entry has no source'
+            actual.append((links[0][0],[url for _,url in links]))
+    assert provided_index_count==int(bool(allowed)), 'provided index must identify exactly one topic'
     assert expected==actual, ('thematic source list differs from topics',edition['slug'])
     assert len({title for title,_ in expected})==len(expected), 'thematic duplicate topic'
     assert len(expected)==edition['count'], 'thematic topic count differs'
