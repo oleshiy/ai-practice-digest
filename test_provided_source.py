@@ -7,7 +7,7 @@ import sys
 import tempfile
 
 ROOT=Path(__file__).resolve().parent
-TITLE='OpenAI удваивает Work и Codex для получателя Pro и готовит общий лимит ChatGPT и Codex'
+TITLE='OpenAI удвоила лимиты Work и Codex в Pro и готовит общий бюджет использования'
 NOTE='Источник — письмо OpenAI получателю Pro, предоставлено пользователем 1 ноября; дата отправки и публичная ссылка неизвестны.'
 READER=f'''---
 date: 2026-11-01

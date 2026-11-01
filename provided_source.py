@@ -1,7 +1,7 @@
 """One explicit user-provided source exception; never a general URL fallback."""
 SLUG='2026-11-01-weekly'
 MARKER='openai-pro-email-2026-11-01'
-TITLE='OpenAI удваивает Work и Codex для получателя Pro и готовит общий лимит ChatGPT и Codex'
+TITLE='OpenAI удвоила лимиты Work и Codex в Pro и готовит общий бюджет использования'
 NOTE='Источник — письмо OpenAI получателю Pro, предоставлено пользователем 1 ноября; дата отправки и публичная ссылка неизвестны.'
 SOURCE='Письмо OpenAI'
 
