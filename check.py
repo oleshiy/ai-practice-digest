@@ -3,6 +3,7 @@ from pathlib import Path
 from html.parser import HTMLParser
 from urllib.parse import urlsplit,unquote
 import json,re,struct
+from provided_source import provided_source,provided_topic,TITLE,NOTE
 ROOT=Path(__file__).resolve().parent
 OUT=ROOT/'_site'
 class Page(HTMLParser):
@@ -29,7 +30,8 @@ def check_thematic(edition,page):
     topics,tail=raw.split(practice,1)
     practice_body,listed=tail.split(complete,1)
     assert practice_body.strip(), 'thematic practice is empty'
-    expected=[]
+    expected=[];provided_count=0
+    allowed=provided_source(edition)
     for fragment in re.split(r'(?m)(?=^### )',topics):
         if not fragment.startswith('### '):continue
         fragment=fragment.split('\n## ',1)[0]
@@ -37,14 +39,19 @@ def check_thematic(edition,page):
         title=re.sub(r'\[([^]]+)\]\([^)]+\)',r'\1',heading)
         fragment='\n'.join(line for line in fragment.splitlines() if not line.startswith(('![','Подпись: ')))
         urls=list(dict.fromkeys(re.findall(r'\]\((https?://[^\s)]+)\)',fragment)))
-        assert urls, ('thematic topic has no source',title)
+        if not urls:
+            assert heading==title and provided_topic(edition,title,fragment.splitlines()), ('thematic topic has no source',title)
+            provided_count+=1
         expected.append((title,urls))
+    assert provided_count==int(allowed), 'provided source must identify exactly one topic'
     actual=[]
     for line in listed.splitlines():
         if not re.match(r'^\d+\. ',line):continue
         links=re.findall(r'\[([^]]+)\]\((https?://[^\s)]+)\)',line)
-        assert links, 'thematic list entry has no source'
-        actual.append((links[0][0],[url for _,url in links]))
+        if links:actual.append((links[0][0],[url for _,url in links]))
+        else:
+            assert allowed and re.fullmatch(r'\d+\. '+re.escape(TITLE+'. '+NOTE),line), 'thematic list entry has no source'
+            actual.append((TITLE,[]))
     assert expected==actual, ('thematic source list differs from topics',edition['slug'])
     assert len({title for title,_ in expected})==len(expected), 'thematic duplicate topic'
     assert len(expected)==edition['count'], 'thematic topic count differs'
@@ -79,6 +86,7 @@ def check():
                 target=u.path or name;assert target in pages,(name,link)
                 if u.fragment:assert unquote(u.fragment) in pages[target].ids,(name,link)
     for e in EDITIONS:
+        provided_source(e)
         page=pages[e['slug']+'.html']
         if e['type']=='daily':
             if 'sections' in e:assert page.sections==e['sections'],(e['slug'],page.sections,e['sections'])

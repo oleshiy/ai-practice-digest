@@ -8,6 +8,7 @@ With opt-in section navigation, H3 groups in the practical section are not findi
 import html,re
 from datetime import date,timedelta
 from urllib.parse import urlsplit
+from provided_source import provided_topic,SOURCE
 
 LINK=re.compile(r'\[([^\]]+)\]\((https?://[^\s)]+)\)')
 FRESH_DAYS=7
@@ -16,12 +17,13 @@ def findings(editions):
     """Newest edition first; a URL seen in several editions keeps its newest appearance."""
     seen=set();rows=[]
     for e in editions:
-        section='';lines=e['body'].splitlines();i=0
+        section='';lines=e['body'].splitlines();i=0;anchor=0
         while i<len(lines):
             line=lines[i]
+            if re.match(r'^#{2,3} ',line):anchor+=1
             if line.startswith('## '):section=line[3:].strip();i+=1;continue
             if e.get('toc')=='sections' and section=='Что из этого применить в платформе':i+=1;continue
-            title=url=None;body=[]
+            title=url=None;body=[];provided=False
             if line.startswith('### '):
                 heading=line[4:].strip();m=LINK.fullmatch(heading)
                 if m:title,url=m.group(1),m.group(2)
@@ -33,13 +35,15 @@ def findings(editions):
                     i+=1
                 if url is None:
                     found=LINK.search(' '.join(body));url=found.group(2) if found else None
+                    if url is None and provided_topic(e,title,body):
+                        url=e['slug']+'.html#section-'+str(anchor);provided=True
                 body=[b for b in body if not (b.startswith('[') and LINK.fullmatch(b.split(' · ')[0]) and len(b)<120)]
             elif section=='Остальное' and LINK.match(line):
                 m=LINK.match(line);title,url=m.group(1),m.group(2);body=[line[m.end():].strip(' —-–.')];i+=1
             else:i+=1;continue
             if not url or url in seen:continue
             seen.add(url)
-            rows.append({'title':title,'url':url,'source':urlsplit(url).netloc.removeprefix('www.'),'date':e['date'],
+            rows.append({'title':title,'url':url,'source':SOURCE if provided else urlsplit(url).netloc.removeprefix('www.'),'date':e['date'],
                          'edition':e['slug'],'edition_title':e['title'],'section':section,'body':' '.join(body)})
     return rows
 
@@ -55,7 +59,8 @@ def render_archive(editions, inline):
         note=('<p class="finding-meta">'+html.escape(x['date'])+' · <a href="'+x['edition']+'.html">'+html.escape(x['section'] or 'выпуск')+'</a></p>')
         cards.append('<article class="finding" data-source="'+html.escape(x['source'],quote=True)+'" data-fresh="'+str(fresh).lower()+'"'+hidden+'><h2><a href="'+html.escape(x['url'],quote=True)+'">'+html.escape(x['title'])+'</a></h2>'+note+('<p>'+inline(x['body'])+'</p>' if x['body'] else '')+'</article>')
     first=min(e['date'] for e in editions)
-    return ('<main id="main" class="findings-page"><header class="archive-head"><h1>Архив находок</h1><p>'+str(len(rows))+' находок из всех выпусков с '+html.escape(first)+' по '+html.escape(newest.isoformat())+'. Архив собирается из самих выпусков при каждой публикации: каждая находка ведёт на источник и на выпуск, где она разобрана.</p></header>'
+    source_note=' Для письма без публичной ссылки доступен разбор с описанием источника.' if any(x['source']==SOURCE for x in rows) else ''
+    return ('<main id="main" class="findings-page"><header class="archive-head"><h1>Архив находок</h1><p>'+str(len(rows))+' находок из всех выпусков с '+html.escape(first)+' по '+html.escape(newest.isoformat())+'. Архив собирается из самих выпусков при каждой публикации: каждая находка ведёт на источник и на выпуск, где она разобрана.'+source_note+'</p></header>'
             '<form class="filters" onsubmit="return false"><label>Поиск по названию и тексту<input id="finding-search" type="search" placeholder="Например: проверка кода" autocomplete="off"></label><label>Период<select id="finding-period"><option value="last30">Все выпуски</option><option value="last10">Последние '+str(FRESH_DAYS)+' дней</option></select></label><label>Источник<select id="finding-source"><option value="">Все источники</option>'+options+'</select></label><button id="finding-clear" type="button">Сбросить</button></form>'
             '<div class="pager"><p id="finding-count" role="status" aria-live="polite">'+str(len(rows))+' находок</p><div><button id="finding-previous" type="button" disabled>← Назад</button><button id="finding-next" type="button">Далее →</button></div></div>'
             '<noscript><p>Для поиска и фильтров включите JavaScript. Без него ниже доступны все находки; можно использовать поиск браузера.</p><style>.filters,.pager{display:none}.finding[hidden]{display:block}</style></noscript>'
