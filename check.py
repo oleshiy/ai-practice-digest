@@ -73,7 +73,7 @@ def check():
     assert '<p>Первый абзац.</p><p>Второй абзац.</p></li>' in rendered
     assert rendered.endswith('<p>Конечная статистика.</p>')
     pages={p.name:Page(p.read_text()) for p in OUT.glob('*.html')}
-    assert len(pages)==len(EDITIONS)+4+len(COMPARISONS)+(1 if COMPARISONS else 0)
+    assert len(pages)==len(EDITIONS)+sum(bool(e.get('redirect_from')) for e in EDITIONS)+4+len(COMPARISONS)+(1 if COMPARISONS else 0)
     for name,page in pages.items():
         assert page.viewport and 'main' in page.ids,name
         assert page.icons==[{'rel':'icon','type':'image/png','sizes':f'{size}x{size}','href':BASE+f'assets/favicon-{size}.png'} for size in (16,32)],name

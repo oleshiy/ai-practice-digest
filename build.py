@@ -11,6 +11,7 @@ REQUIRED={'date','type','title'}
 TYPES={'daily','weekly','last10','last30','top30','working'}
 LABELS={'daily':'Суточный выпуск','weekly':'Недельный выпуск','last10':'10 суток','last30':'30 суток','top30':'Топ-подборка','working':'Рабочая подборка'}
 TYPE_ORDER={'weekly':5,'daily':4,'top30':3,'last10':2,'last30':1,'working':0}
+SLUG=re.compile(r'(?:[a-z][a-z0-9]*-)?\d{4}-\d{2}-\d{2}-[a-z0-9-]+')
 def releases():
     result=[];slugs=set()
     for source in sorted((ROOT/'content').glob('*.md')):
@@ -32,7 +33,7 @@ def releases():
         if 'navigation' in meta and meta['navigation']!='top':raise ValueError(f'{source.name}: invalid navigation')
         if 'toc' in meta and meta['toc'] not in ('plain','sections'):raise ValueError(f'{source.name}: invalid toc')
         slug=source.stem
-        if not re.fullmatch(r'\d{4}-\d{2}-\d{2}-[a-z0-9-]+',slug) or slug in slugs:raise ValueError(f'{source.name}: invalid or duplicate slug')
+        if not SLUG.fullmatch(slug) or slug in slugs:raise ValueError(f'{source.name}: invalid or duplicate slug')
         slugs.add(slug)
         if not body.startswith('# ') or body.splitlines()[0][2:]!=meta['title']:raise ValueError(f'{source.name}: title differs from body')
         meta.update({'slug':slug,'file':source.name,'body':body,'count':int(meta['count']) if 'count' in meta else None})
@@ -44,6 +45,12 @@ def releases():
                 if not meta[key].isdigit():raise ValueError(f'{source.name}: invalid {key}')
                 meta[key]=int(meta[key])
         result.append(meta)
+    aliases=set()
+    for item in result:
+        alias=item.get('redirect_from')
+        if alias is not None:
+            if not SLUG.fullmatch(alias) or alias in slugs or alias in aliases:raise ValueError('invalid or colliding redirect alias')
+            aliases.add(alias)
     if not result:raise ValueError('No releases')
     return sorted(result,key=lambda item:(item['date'],TYPE_ORDER[item['type']],item['slug']),reverse=True)
 EDITIONS=releases()
@@ -83,6 +90,8 @@ def comparisons():
             result.append({**comparison,'label':variant['label'],'slug':variant['slug'],'file':variant['file'],'reader_title':meta['title'],'body':body})
     return sorted(result,key=lambda item:(item['date'],item['id'],item['label']),reverse=True)
 COMPARISONS=comparisons()
+PAGE_SLUGS=[e['slug'] for e in EDITIONS]+[e['redirect_from'] for e in EDITIONS if e.get('redirect_from')]+[item['slug'] for item in COMPARISONS]
+if len(PAGE_SLUGS)!=len(set(PAGE_SLUGS)):raise ValueError('edition or redirect collides with comparison slug')
 TOKEN=re.compile(r'`([^`]+)`|\[([^\]]+)\]\(([^\s)]+)\)|\*\*(.+?)\*\*')
 def inline(text):
     out=[];pos=0
@@ -196,6 +205,12 @@ def build():
         working_label='<p class="eyebrow">Рабочая подборка</p>' if e['type']=='working' else ''
         body='<main id="main"><header class="article-head">'+working_label+'<h1>'+html.escape(heading)+'</h1></header><div class="'+layout_class+'">'+reading+'</div><div class="after-reading"><a href="archive.html">Другие выпуски →</a><a href="#main">К началу ↑</a></div></main>'
         (OUT/(e['slug']+'.html')).write_text(frame(e['title'],e['subtitle'],body,e['slug']+'.html'))
+        if e.get('redirect_from'):
+            target=e['slug']+'.html'
+            alias_body='<main id="main"><h1>Выпуск переехал</h1><p><a href="'+target+'">Открыть выпуск</a></p></main>'
+            redirect=frame(e['title'],e['subtitle'],alias_body,target)
+            redirect=redirect.replace('</head>','<meta name="robots" content="noindex"><meta http-equiv="refresh" content="0;url='+target+'"><script>location.replace('+json.dumps(target)+'+location.search+location.hash)</script></head>')
+            (OUT/(e['redirect_from']+'.html')).write_text(redirect)
     if COMPARISONS:
         rows=[]
         for item in COMPARISONS:
