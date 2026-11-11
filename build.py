@@ -4,6 +4,7 @@ import html,json,re,shutil
 from hashlib import sha256
 from datetime import date
 from urllib.parse import urlsplit
+from compact import compact_outline
 ROOT=Path(__file__).resolve().parent
 OUT=ROOT/'_site'
 BASE='https://oleshiy.github.io/ai-practice-digest/'
@@ -27,6 +28,7 @@ def releases():
             meta[key]=value
         if REQUIRED-meta.keys():raise ValueError(f'{source.name}: missing {sorted(REQUIRED-meta.keys())}')
         if meta['type'] not in TYPES:raise ValueError(f'{source.name}: invalid type')
+        if 'format' in meta and (meta['format']!='compact' or meta['type']!='daily'):raise ValueError(f'{source.name}: invalid format (compact requires daily)')
         try:date.fromisoformat(meta['date'])
         except ValueError:raise ValueError(f'{source.name}: invalid date')
         if 'count' in meta and (not meta['count'].isdigit() or int(meta['count'])<1):raise ValueError(f'{source.name}: invalid count')
@@ -41,6 +43,7 @@ def releases():
         slugs.add(slug)
         if not body.startswith('# ') or body.splitlines()[0][2:]!=meta['title']:raise ValueError(f'{source.name}: title differs from body')
         meta.update({'slug':slug,'file':source.name,'body':body,'count':int(meta['count']) if 'count' in meta else None})
+        if meta.get('format')=='compact' and meta['count'] is None:meta['count']=len(compact_outline(body)['topics'])
         meta.setdefault('label',LABELS[meta['type']])
         meta.setdefault('subtitle','Редакционный выпуск со ссылками на источники и существенными ограничениями.')
         meta.setdefault('window',meta['date'])
@@ -123,9 +126,10 @@ def figure_asset(url):
         raise ValueError("Figure asset must be a PNG image")
     return source
 
-def markdown(text,*,toc_sections=False,reserved_heading_ids=()):
+def markdown(text,*,toc_sections=False,reserved_heading_ids=(),compact=False):
     """Render paragraphs and numbered entries with indented continuation paragraphs."""
     blocks=['<span id="section-'+str(n)+'"></span>' for n in reserved_heading_ids];toc=[];lines=text.splitlines();i=0;heading=0
+    compact_paragraphs=compact_outline(text)['paragraphs'] if compact else {}
     while i<len(lines):
         line=lines[i]
         if not line.strip():i+=1;continue
@@ -166,10 +170,12 @@ def markdown(text,*,toc_sections=False,reserved_heading_ids=()):
                 blocks.append('<li>'+''.join('<p>'+inline(' '.join(x.splitlines()))+'</p>' for x in paragraphs if x.strip())+'</li>')
                 if i>=len(lines) or not re.match(r'^(\d+\.|-) (.+)',lines[i]):break
             blocks.append('</'+tag+'>');continue
-        para=[]
+        para=[];paragraph_info=compact_paragraphs.get(i)
         while i<len(lines) and lines[i].strip() and not re.match(r'^(#{1,4} |\d+\. |- |!\[)',lines[i]):
             para.append(lines[i].strip());i+=1
-        blocks.append('<p>'+inline(' '.join(para))+'</p>')
+        attributes=' id="'+paragraph_info['anchor']+'"' if paragraph_info else ''
+        if paragraph_info and 'title' not in paragraph_info:toc.append((paragraph_info['anchor'],paragraph_info['section']))
+        blocks.append('<p'+attributes+'>'+inline(' '.join(para))+'</p>')
     return '\n'.join(blocks),toc
 
 def frame(title,description,body,path):
@@ -200,7 +206,7 @@ def build():
     archive='<main id="main" class="home"><div class="intro compact"><p class="eyebrow">Все выпуски</p><h1>Архив выпусков</h1><p>У каждого выпуска своё окно отбора. Находки в разных выпусках могут пересекаться. Остальное полезное — в <a href="findings.html">архиве с поиском</a>.</p></div><section class="editions" aria-label="Архив выпусков">'+cards+'</section></main>'
     (OUT/'archive.html').write_text(frame('Архив','Все опубликованные выпуски «Практики ИИ».',archive,'archive.html'))
     for e in EDITIONS:
-        content,toc=markdown(e['body'],toc_sections=e.get('toc')=='sections',reserved_heading_ids=e.get('reserved_heading_ids',()))
+        content,toc=markdown(e['body'],toc_sections=e.get('toc')=='sections',reserved_heading_ids=e.get('reserved_heading_ids',()),compact=e.get('format')=='compact')
         contents='<details open><summary>В этом выпуске</summary><ol>'+''.join('<li><a href="#'+a+'">'+html.escape(plain_inline(t) if e.get('toc') in ('plain','sections') else t)+'</a></li>' for a,t in toc)+'</ol></details>'
         heading=e['title']
         article='<article class="prose">'+content+'</article>'

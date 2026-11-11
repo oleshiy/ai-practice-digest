@@ -4,6 +4,7 @@ from html.parser import HTMLParser
 from urllib.parse import urlsplit,unquote
 import json,re,struct
 from provided_source import provided_source,provided_topic,NOTE
+from compact import compact_outline
 ROOT=Path(__file__).resolve().parent
 OUT=ROOT/'_site'
 class Page(HTMLParser):
@@ -94,7 +95,14 @@ def check():
     for e in EDITIONS:
         provided_source(e)
         page=pages[e['slug']+'.html']
-        if e['type']=='daily':
+        if e.get('format')=='compact':
+            outline=compact_outline(e['body']);topics=outline['topics']
+            assert topics and len(topics)==e['count'],(e['slug'],'compact topic count differs')
+            assert len({topic['url'] for topic in topics})==len(topics),(e['slug'],'duplicate compact source')
+            assert all(topic['anchor'] in page.ids for topic in topics),(e['slug'],'compact anchor missing')
+            if 'sections' in e:assert len(outline['sections'])==e['sections'],(e['slug'],'compact section count differs')
+            assert page.items==0,(e['slug'],page.items)
+        elif e['type']=='daily':
             if 'sections' in e:assert page.sections==e['sections'],(e['slug'],page.sections,e['sections'])
             assert page.items==0,(e['slug'],page.items)
         elif 'sections' in e:
@@ -107,7 +115,7 @@ def check():
                 assert page.items==e['count']+e.get('shorts',0),(e['slug'],page.items,e['count'])
         raw=e['body']
         nonempty=[line for line in raw.splitlines() if line.strip()]
-        assert nonempty[0].startswith('# ') and (nonempty[1].startswith('## ') or e['type']!='daily' and 'sections' in e and nonempty[1].startswith('### ')),e['slug']
+        assert nonempty[0].startswith('# ') and (e.get('format')=='compact' or nonempty[1].startswith('## ') or e['type']!='daily' and 'sections' in e and nonempty[1].startswith('### ')),e['slug']
         source_links=re.findall(r'\]\((https?://[^\s)]+)\)',raw)
         assert all(u in page.links for u in source_links),e['slug']
         assert source_links and len(source_links)<=len(page.links)

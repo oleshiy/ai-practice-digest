@@ -26,6 +26,7 @@ jobs:
           python3 test_provided_source.py
           python3 test_working.py
           python3 test_figures.py
+          python3 test_compact.py
       - uses: actions/upload-pages-artifact@v4
         with:
           path: _site

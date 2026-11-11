@@ -9,6 +9,7 @@ import html,re
 from datetime import date,timedelta
 from urllib.parse import urlsplit
 from provided_source import provided_topic,SOURCE
+from compact import compact_outline
 
 LINK=re.compile(r'\[([^\]]+)\]\((https?://[^\s)]+)\)')
 FRESH_DAYS=7
@@ -17,6 +18,15 @@ def findings(editions):
     """Newest edition first; a URL seen in several editions keeps its newest appearance."""
     seen=set();rows=[]
     for e in editions:
+        if e.get('format')=='compact':
+            for topic in compact_outline(e['body'])['topics']:
+                url=topic['url']
+                if url in seen:continue
+                seen.add(url)
+                rows.append({'title':topic['title'],'url':url,'source':urlsplit(url).netloc.removeprefix('www.'),'date':e['date'],
+                             'edition':e['slug'],'edition_title':e['title'],'section':topic['section'],'body':topic['body'],
+                             'anchor':topic['anchor']})
+            continue
         section='';lines=e['body'].splitlines();i=0;anchor=0
         while i<len(lines):
             line=lines[i]
@@ -59,7 +69,8 @@ def render_archive(editions, inline):
     for n,x in enumerate(rows):
         fresh=date.fromisoformat(x['date'])>=cutoff
         hidden=' hidden' if n>=20 else ''
-        note=('<p class="finding-meta">'+html.escape(x['date'])+' · <a href="'+x['edition']+'.html">'+html.escape(x['section'] or 'выпуск')+'</a></p>')
+        target=x['edition']+'.html'+('#'+x['anchor'] if x.get('anchor') else '')
+        note=('<p class="finding-meta">'+html.escape(x['date'])+' · <a href="'+target+'">'+html.escape(x['section'] or 'выпуск')+'</a></p>')
         cards.append('<article class="finding" data-source="'+html.escape(x['source'],quote=True)+'" data-fresh="'+str(fresh).lower()+'"'+hidden+'><h2><a href="'+html.escape(x['url'],quote=True)+'">'+html.escape(x['title'])+'</a></h2>'+note+('<p>'+inline(x['body'])+'</p>' if x['body'] else '')+'</article>')
     first=min(e['date'] for e in editions)
     source_note=' Для письма без публичной ссылки доступен разбор с описанием источника.' if any(x['source']==SOURCE for x in rows) else ''
