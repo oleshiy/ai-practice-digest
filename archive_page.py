@@ -20,7 +20,9 @@ def findings(editions):
         section='';lines=e['body'].splitlines();i=0;anchor=0
         while i<len(lines):
             line=lines[i]
-            if re.match(r'^#{2,3} ',line):anchor+=1
+            if re.match(r'^#{2,3} ',line):
+                anchor+=1
+                while anchor in e.get('reserved_heading_ids',()):anchor+=1
             if line.startswith('## '):section=line[3:].strip();i+=1;continue
             if e.get('toc')=='sections' and section in ('Что из этого применить в платформе', 'Что можно внедрить за две недели'):i+=1;continue
             title=url=None;body=[];provided=False

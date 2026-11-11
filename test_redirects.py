@@ -41,4 +41,8 @@ with tempfile.TemporaryDirectory() as temp:
     collision.rename(renamed)
     renamed.rename(content/'invalid-prefix!.md')
     assert run().returncode!=0
+rendered,_=build.markdown('# Выпуск\n\n## Практика\n\n### Первая\n\n### Вторая\n\n## Безопасность\n\n### Тема\n',reserved_heading_ids=(4,5))
+assert '<h2 id="section-6">Безопасность</h2>' in rendered
+assert '<h3 id="section-7">Тема</h3>' in rendered
+assert 'id="section-4"' in rendered and 'id="section-5"' in rendered
 print('PASS: prefixed release, single indexed edition, canonical alias, deep links and invalid/colliding aliases')

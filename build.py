@@ -32,6 +32,10 @@ def releases():
         if 'count' in meta and (not meta['count'].isdigit() or int(meta['count'])<1):raise ValueError(f'{source.name}: invalid count')
         if 'navigation' in meta and meta['navigation']!='top':raise ValueError(f'{source.name}: invalid navigation')
         if 'toc' in meta and meta['toc'] not in ('plain','sections'):raise ValueError(f'{source.name}: invalid toc')
+        if 'reserved_heading_ids' in meta:
+            if not re.fullmatch(r'[1-9]\d*(?:,[1-9]\d*)*',meta['reserved_heading_ids']):raise ValueError('invalid reserved heading IDs')
+            meta['reserved_heading_ids']=tuple(map(int,meta['reserved_heading_ids'].split(',')))
+            if tuple(sorted(set(meta['reserved_heading_ids'])))!=meta['reserved_heading_ids']:raise ValueError('reserved heading IDs must be unique and sorted')
         slug=source.stem
         if not SLUG.fullmatch(slug) or slug in slugs:raise ValueError(f'{source.name}: invalid or duplicate slug')
         slugs.add(slug)
@@ -119,9 +123,9 @@ def figure_asset(url):
         raise ValueError("Figure asset must be a PNG image")
     return source
 
-def markdown(text,*,toc_sections=False):
+def markdown(text,*,toc_sections=False,reserved_heading_ids=()):
     """Render paragraphs and numbered entries with indented continuation paragraphs."""
-    blocks=[];toc=[];lines=text.splitlines();i=0;heading=0
+    blocks=['<span id="section-'+str(n)+'"></span>' for n in reserved_heading_ids];toc=[];lines=text.splitlines();i=0;heading=0
     while i<len(lines):
         line=lines[i]
         if not line.strip():i+=1;continue
@@ -141,7 +145,9 @@ def markdown(text,*,toc_sections=False):
             if len(h[1])==1:continue
             if len(h[1])==4:
                 blocks.append('<h4>'+inline(h[2])+'</h4>');continue
-            heading+=1;anchor='section-'+str(heading);title=h[2]
+            heading+=1
+            while heading in reserved_heading_ids:heading+=1
+            anchor='section-'+str(heading);title=h[2]
             if not toc_sections or len(h[1])==2:toc.append((anchor,title))
             blocks.append(f'<h{len(h[1])} id="{anchor}">'+inline(title)+f'</h{len(h[1])}>');continue
         li=re.match(r'^(\d+\.|-) (.+)',line)
@@ -194,7 +200,7 @@ def build():
     archive='<main id="main" class="home"><div class="intro compact"><p class="eyebrow">Все выпуски</p><h1>Архив выпусков</h1><p>У каждого выпуска своё окно отбора. Находки в разных выпусках могут пересекаться. Остальное полезное — в <a href="findings.html">архиве с поиском</a>.</p></div><section class="editions" aria-label="Архив выпусков">'+cards+'</section></main>'
     (OUT/'archive.html').write_text(frame('Архив','Все опубликованные выпуски «Практики ИИ».',archive,'archive.html'))
     for e in EDITIONS:
-        content,toc=markdown(e['body'],toc_sections=e.get('toc')=='sections')
+        content,toc=markdown(e['body'],toc_sections=e.get('toc')=='sections',reserved_heading_ids=e.get('reserved_heading_ids',()))
         contents='<details open><summary>В этом выпуске</summary><ol>'+''.join('<li><a href="#'+a+'">'+html.escape(plain_inline(t) if e.get('toc') in ('plain','sections') else t)+'</a></li>' for a,t in toc)+'</ol></details>'
         heading=e['title']
         article='<article class="prose">'+content+'</article>'

@@ -1,5 +1,6 @@
 ---
 redirect_from: 2026-11-09-daily
+reserved_heading_ids: 4,5
 date: 2026-11-09
 type: daily
 title: astra AI-дайджест · 9 ноября 2026
