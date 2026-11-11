@@ -1,4 +1,5 @@
 ---
+redirect_from: 2026-11-09-kimidaily
 date: 2026-11-09
 type: daily
 title: AI-дайджест · 9 ноября 2026
