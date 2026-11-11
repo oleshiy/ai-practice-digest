@@ -106,12 +106,13 @@ with tempfile.TemporaryDirectory() as temp:
     archive_body+='\n## Что из этого применить в платформе\n\n'
     archive_body+='\n'.join(f'### Практическая группа {n}\n\n**Предложение.** [Опора]({url})\n' for n,url in enumerate(practice_urls))
     archive_body+='\n## Коротко\n\n### Последний сюжет\n\n[Источник]('+story_urls[-1]+')\n'
-    for toc_mode,expected_urls in [('plain',story_urls[:-1]+practice_urls+story_urls[-1:]),('sections',story_urls)]:
-        source.write_text(header+'navigation: top\ntoc: '+toc_mode+'\n'+archive_body)
-        build(checkout)
-        urls=ArchiveFindings((checkout/'_site'/'findings.html').read_text()).urls
-        fixture_urls=[url for url in urls if url.startswith('https://example.com/navigation-fixture/')]
-        assert fixture_urls==expected_urls, f'{toc_mode}: archive must retain all 50 story H3, but exclude practice groups only with section navigation'
+    for practice_heading in ['Что из этого применить в платформе', 'Что можно внедрить за две недели']:
+        for toc_mode,expected_urls in [('plain',story_urls[:-1]+practice_urls+story_urls[-1:]),('sections',story_urls)]:
+            source.write_text(header+'navigation: top\ntoc: '+toc_mode+'\n'+archive_body.replace('Что из этого применить в платформе', practice_heading))
+            build(checkout)
+            urls=ArchiveFindings((checkout/'_site'/'findings.html').read_text()).urls
+            fixture_urls=[url for url in urls if url.startswith('https://example.com/navigation-fixture/')]
+            assert fixture_urls==expected_urls, f'{toc_mode}: archive must retain all 50 story H3, but exclude practice groups only with section navigation'
     for slug,content in prior.items():
         assert (checkout/'_site'/(slug+'.html')).read_bytes()==content, f'prior edition changed by practice groups: {slug}'
     source.write_text(header+'toc: typo\n'+body)

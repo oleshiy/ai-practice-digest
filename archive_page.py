@@ -22,7 +22,7 @@ def findings(editions):
             line=lines[i]
             if re.match(r'^#{2,3} ',line):anchor+=1
             if line.startswith('## '):section=line[3:].strip();i+=1;continue
-            if e.get('toc')=='sections' and section=='Что из этого применить в платформе':i+=1;continue
+            if e.get('toc')=='sections' and section in ('Что из этого применить в платформе', 'Что можно внедрить за две недели'):i+=1;continue
             title=url=None;body=[];provided=False
             if line.startswith('### '):
                 heading=line[4:].strip();m=LINK.fullmatch(heading)
