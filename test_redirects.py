@@ -1,6 +1,6 @@
 """Renamed releases remain one edition and keep old deep links working."""
 from pathlib import Path
-import shutil, subprocess, sys, tempfile
+import re, shutil, subprocess, sys, tempfile
 import build
 
 with tempfile.TemporaryDirectory() as temp:
@@ -10,7 +10,7 @@ with tempfile.TemporaryDirectory() as temp:
     old=content/'2026-11-09-daily.md'
     if not old.exists():
         old=content/'astra-2026-11-09-daily.md'
-    original=old.read_text().replace('redirect_from: 2026-11-09-daily\n','')
+    original=re.sub(r'^redirect_from: .*\n','',old.read_text(),flags=re.MULTILINE)
     old.unlink()
     renamed=content/'astra-2026-11-09-daily.md'
     renamed.write_text(original.replace('---\n','---\nredirect_from: 2026-11-09-daily\n',1))
