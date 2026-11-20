@@ -72,7 +72,7 @@ def run(site,name):
 
 with tempfile.TemporaryDirectory() as temporary:
     site=Path(temporary)/'site'
-    shutil.copytree(ROOT,site,ignore=shutil.ignore_patterns('.git','_site','__pycache__','content','comparisons'))
+    shutil.copytree(ROOT,site,ignore=shutil.ignore_patterns('.git','_site','__pycache__','content','comparisons','findings'))
     (site/'content').mkdir()
     legacy=site/'content/2026-10-31-daily.md'
     legacy.write_text('---\ndate: 2026-10-31\ntype: daily\ntitle: Прежний выпуск\n---\n# Прежний выпуск\n\n## Новости\n\n### [Прежняя тема](https://example.com/legacy)\n\nМатериал.\n')

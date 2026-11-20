@@ -18,6 +18,7 @@ jobs:
         run: |
           python3 build.py
           python3 check.py
+          python3 test_reference_archive.py
           node test_archive.js
           node test_releases.js
           python3 test_publisher.py

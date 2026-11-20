@@ -3,6 +3,8 @@
   const root = document.querySelector('[data-findings]');
   if (!root) return;
   const input = document.querySelector('#finding-search');
+  const view = document.querySelector('#finding-view');
+  const collectionDate = document.querySelector('#finding-date');
   const source = document.querySelector('#finding-source');
   const period = document.querySelector('#finding-period');
   const count = document.querySelector('#finding-count');
@@ -10,15 +12,18 @@
   const next = document.querySelector('#finding-next');
   const clear = document.querySelector('#finding-clear');
   const normalize = value => value.toLocaleLowerCase('ru').replaceAll('ё', 'е');
-  const records = [...root.querySelectorAll('.finding')].map(node => ({node, text: normalize(node.textContent), source: node.dataset.source, fresh: node.dataset.fresh === 'true'}));
+  const records = [...root.querySelectorAll('.finding')].map(node => ({node, text: normalize(node.textContent), source: node.dataset.source, fresh: node.dataset.fresh === 'true', view: node.dataset.view, date: node.dataset.date}));
   let page = 0;
   const size = 20;
-  const initial = new URLSearchParams(location.search).get('period');
+  const params = new URLSearchParams(location.search);
+  const initial = params.get('period');
+  if (['edition', 'reference'].includes(params.get('view'))) view.value = params.get('view');
+  if (/^\d{4}-\d{2}-\d{2}$/.test(params.get('date') || '')) collectionDate.value = params.get('date');
   if (initial === 'last10') period.value = initial;
   function render(reset = false) {
     if (reset) page = 0;
     const words = normalize(input.value.trim()).split(/\s+/).filter(Boolean);
-    const matches = records.filter(item => (!source.value || item.source === source.value) && (period.value !== 'last10' || item.fresh) && words.every(word => item.text.includes(word)));
+    const matches = records.filter(item => (!view.value || item.view === view.value) && (!collectionDate.value || item.date === collectionDate.value) && (!source.value || item.source === source.value) && (period.value !== 'last10' || item.fresh) && words.every(word => item.text.includes(word)));
     const pages = Math.max(1, Math.ceil(matches.length / size));
     page = Math.min(page, pages - 1);
     records.forEach(item => { item.node.hidden = true; });
@@ -28,10 +33,12 @@
     next.disabled = page + 1 >= pages;
   }
   input.addEventListener('input', () => render(true));
+  view.addEventListener('change', () => render(true));
+  collectionDate.addEventListener('change', () => render(true));
   source.addEventListener('change', () => render(true));
   period.addEventListener('change', () => render(true));
   previous.addEventListener('click', () => { page--; render(); });
   next.addEventListener('click', () => { page++; render(); });
-  clear.addEventListener('click', () => { input.value = ''; source.value = ''; period.value = 'last30'; render(true); input.focus(); });
+  clear.addEventListener('click', () => { input.value = ''; view.value = ''; collectionDate.value = ''; source.value = ''; period.value = 'last30'; render(true); input.focus(); });
   render();
 })();

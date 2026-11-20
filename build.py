@@ -218,8 +218,8 @@ def build():
             image=FIGURE.fullmatch(line)
             if image:
                 source=figure_asset(image[2]);shutil.copyfile(source,OUT/image[2])
-    from archive_page import render_archive
-    (OUT/'findings.html').write_text(frame('Архив находок','Поиск по принятым материалам о практиках ИИ.',render_archive(EDITIONS,inline),'findings.html'))
+    from archive_page import render_archive,reference_findings
+    (OUT/'findings.html').write_text(frame('Архив находок','Поиск по принятым материалам о практиках ИИ.',render_archive(EDITIONS,inline,reference_findings()),'findings.html'))
     cards=''.join(card(e) for e in EDITIONS)
     home='<main id="main" class="home"><div class="intro"><p class="eyebrow">Редакционные выпуски</p><h1>Что работает<br>в мире ИИ</h1><p>Реальные внедрения, полезные методы и ошибки, на которых можно учиться.</p></div><section class="editions" aria-label="Выпуски" data-release-list data-initial="5">'+cards+'</section><div class="release-actions"><button type="button" data-show-more hidden>Показать ещё</button><a class="read" href="archive.html">Все выпуски →</a></div></main>'
     (OUT/'index.html').write_text(frame('Практики ИИ','Понятные русские дайджесты о реальном опыте применения искусственного интеллекта.',home,''))

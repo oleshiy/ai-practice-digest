@@ -1,0 +1,244 @@
+{
+  "date": "2026-11-18",
+  "window": "5–18 ноября 2026, Europe/Moscow",
+  "items": [
+    {
+      "id": "reference-2026-11-18-topic-8",
+      "kind": "topic",
+      "title": "Marin открыла промежуточные версии большой модели Mochi",
+      "url": "https://x.com/dlwh/status/2122799840057004296",
+      "body": "🔹 [Marin открыла промежуточные версии большой модели Mochi](https://x.com/dlwh/status/2122799840057004296). Опубликованы 57 промежуточных состояний обучения модели с 535 млрд параметров, из которых 23 млрд активны. Они позволяют исследовать изменения модели по ходу обучения, а не только её итоговую версию."
+    },
+    {
+      "id": "reference-2026-11-18-topic-9",
+      "kind": "topic",
+      "title": "NVIDIA сообщила о поставках Vera Rubin NVL72",
+      "url": "https://nvidianews.nvidia.com/news/nvidia-announces-financial-results-for-third-quarter-fiscal-2027",
+      "body": "🔹 [NVIDIA сообщила о поставках Vera Rubin NVL72](https://nvidianews.nvidia.com/news/nvidia-announces-financial-results-for-third-quarter-fiscal-2027). В квартальном отчёте NVIDIA объявила о начале поставок системы и выручке $115,8 млрд — на 103% больше год к году."
+    },
+    {
+      "id": "reference-2026-11-18-topic-10",
+      "kind": "topic",
+      "title": "DaisyRose-27B дообучили на 1200 сложных агентских задачах",
+      "url": "https://huggingface.co/blog/RadixArk/daisyrose-27b-pushing-the-frontier-of-post-trainin",
+      "body": "🔹 [DaisyRose-27B дообучили на 1200 сложных агентских задачах](https://huggingface.co/blog/RadixArk/daisyrose-27b-pushing-the-frontier-of-post-trainin). RadixArk подбирала задания под ошибки исходной Qwen3.8-27B и проверяла обходы условий. В измерении разработчика на наборе агентских задач Terminal-Bench 4.1 доля решений с одной попытки выросла с 5,6% до 12%; контекст — 256 тысяч токенов, сессии до миллиона токенов используют сводки."
+    },
+    {
+      "id": "reference-2026-11-18-topic-11",
+      "kind": "topic",
+      "title": "Google начала открывать Genie 4 подписчикам AI Ultra",
+      "url": "https://deepmind.google/blog/genie-4-is-now-available/",
+      "body": "🔹 [Google начала открывать Genie 4 подписчикам AI Ultra](https://deepmind.google/blog/genie-4-is-now-available/). В Project Genie можно менять виртуальный мир текстом во время сеанса и получать звук в реальном времени; для AI Pro открыт список ожидания. Google признаёт ограничения физики и устойчивости сцен."
+    },
+    {
+      "id": "reference-2026-11-18-topic-12",
+      "kind": "topic",
+      "title": "Datasette экспортирует большие таблицы в Arrow по частям",
+      "url": "https://simonwillison.net/2026/Nov/18/datasette-arrows/",
+      "body": "🔹 [Datasette экспортирует большие таблицы в Arrow по частям](https://simonwillison.net/2026/Nov/18/datasette-arrows/). Новый плагин передаёт данные потоком, без загрузки всей таблицы в память. Нужна предварительная версия Datasette 1.0a43 или новее; сам плагин тоже пока в альфа-версии."
+    },
+    {
+      "id": "reference-2026-11-18-topic-14",
+      "kind": "topic",
+      "title": "IBM встроила прогнозы временных рядов в Confluent",
+      "url": "https://huggingface.co/blog/ibm-research/time-series-powered-streamhouse",
+      "body": "🔹 [IBM встроила прогнозы временных рядов в Confluent](https://huggingface.co/blog/ibm-research/time-series-powered-streamhouse). Функции Flink SQL строят прогнозы и обнаруживают отклонения прямо в потоке данных; модели работают на CPU в облаке и локально. Отраслевые сценарии в статье иллюстративные, результатов внедрения нет."
+    },
+    {
+      "id": "reference-2026-11-18-topic-15",
+      "kind": "topic",
+      "title": "Cloudflare добавила защиту от Java4Shell, но Java всё равно нужно обновить",
+      "url": "https://blog.cloudflare.com/java4shell-waf-protection/",
+      "body": "🔹 [Cloudflare добавила защиту от Java4Shell, но Java всё равно нужно обновить](https://blog.cloudflare.com/java4shell-waf-protection/). Java4Shell — ошибка, позволяющая удалённо выполнить код в уязвимой Java. Правила для платных планов пока лишь записывают события: блокировку включают после проверки ложных срабатываний. Защита не покрывает все пути атаки; обновить и перезапустить нужно каждую уязвимую Java, включая встроенные в приложения и контейнеры версии."
+    },
+    {
+      "id": "reference-2026-11-18-topic-16",
+      "kind": "topic",
+      "title": "Kling Image 4.0 создаёт согласованные серии изображений",
+      "url": "https://pandaily.com/kling-image-4-native-8k-text-coordinated-image-sets",
+      "body": "🔹 [Kling Image 4.0 создаёт согласованные серии изображений](https://pandaily.com/kling-image-4-native-8k-text-coordinated-image-sets). Модель доступна в студии и через API. Kling заявляет генерацию до десяти связанных изображений по одному заданию и нативное разрешение 8K; независимой проверки качества и согласованности в публикации нет."
+    },
+    {
+      "id": "reference-2026-11-18-topic-17",
+      "kind": "topic",
+      "title": "Tencent открыла загрузку весов Hy4 flash",
+      "url": "https://huggingface.co/tencent/Hy4-flash",
+      "body": "🔹 [Tencent открыла загрузку весов Hy4 flash](https://huggingface.co/tencent/Hy4-flash). Доступны две диалоговые версии — обычная и FP8 — и базовая для дальнейшего обучения. По проверке Pandaily, файлы весов доступны для загрузки; успешный запуск не проверялся. Лицензия Tencent ограничивает некоторые крупные сервисы — это не Apache 2.0."
+    },
+    {
+      "id": "reference-2026-11-18-topic-18",
+      "kind": "topic",
+      "title": "RoboFinals сохраняет последствия действий между этапами обучения робота",
+      "url": "https://pandaily.com/lightwheel-robofinals-rl-environments-long-horizon-robot-training",
+      "body": "🔹 [RoboFinals сохраняет последствия действий между этапами обучения робота](https://pandaily.com/lightwheel-robofinals-rl-environments-long-horizon-robot-training). В симуляции Lightwheel положения предметов и ошибки переходят в следующие шаги длинного задания; обучающие и проверочные случаи разделены. Показанная компанией ремонтная последовательность пока не подтверждает работу на реальном роботе."
+    },
+    {
+      "id": "reference-2026-11-18-topic-19",
+      "kind": "topic",
+      "title": "SenseTime выпустила окончательную SenseNova-Loop-9B с поддержкой Cambricon",
+      "url": "https://huggingface.co/sensenova/SenseNova-Loop-9B",
+      "body": "🔹 [SenseTime выпустила окончательную SenseNova-Loop-9B с поддержкой Cambricon](https://huggingface.co/sensenova/SenseNova-Loop-9B). По тестам SenseTime, результат GAIA на агентных задачах вырос с 37,86 у Preview до 69,90. [Cambricon заявила адаптацию](https://www.ithome.com/1/028/568.htm) к своим ускорителям в день выпуска; примеры развёртывания в документации пока основаны на Preview."
+    },
+    {
+      "id": "reference-2026-11-18-topic-20",
+      "kind": "topic",
+      "title": "Google Cloud собрала модели Google, Anthropic и OpenAI в одной платформе",
+      "url": "https://cloud.google.com/blog/products/ai-machine-learning/google-cloud-is-a-leader-in-the-2026-gartner-magic-quadrant",
+      "body": "🔹 [Google Cloud собрала модели Google, Anthropic и OpenAI в одной платформе](https://cloud.google.com/blog/products/ai-machine-learning/google-cloud-is-a-leader-in-the-2026-gartner-magic-quadrant). По заявлению Google, компании могут получать модели трёх лабораторий через общий корпоративный доступ, оплачивать их одним счётом из уже согласованного по контракту облачного бюджета. Конкретные модели, регионы и условия доступности статья не перечисляет."
+    },
+    {
+      "id": "reference-2026-11-18-topic-21",
+      "kind": "topic",
+      "title": "Rumble-2-Flash распознаёт речь сорока языков моделью на полмиллиарда параметров",
+      "url": "https://huggingface.co/blog/rumble-2-flash",
+      "body": "🔹 [Rumble-2-Flash распознаёт речь сорока языков моделью на полмиллиарда параметров](https://huggingface.co/blog/rumble-2-flash). Модель открыта под Apache 2.0. В тесте разработчика на 302 часах английских телефонных разговоров доля ошибок слов — 7,86%, близко к 7,78% у Nemotron 3.5 Transcribe на 30 миллиардов параметров."
+    },
+    {
+      "id": "reference-2026-11-18-topic-23",
+      "kind": "topic",
+      "title": "Datadog подключает локальные журналы в MinIO AIStor",
+      "url": "https://www.datadoghq.com/blog/datadog-byoc-minio-aistor/",
+      "body": "🔹 [Datadog подключает локальные журналы в MinIO AIStor](https://www.datadoghq.com/blog/datadog-byoc-minio-aistor/). Индексация и поиск работают в Kubernetes заказчика; Bits AI может использовать эти журналы для расследований. Найденные строки проходят через Datadog, хотя полная история остаётся локально. Пока поддерживаются только журналы, без метрик и трасс."
+    },
+    {
+      "id": "reference-2026-11-18-topic-33",
+      "kind": "topic",
+      "title": "GitLab: настройка агентной разработки с едиными проверками",
+      "url": "https://about.gitlab.com/blog/recommended-config-for-agentic-engineering/",
+      "body": "🔹 [GitLab: настройка агентной разработки с едиными проверками](https://about.gitlab.com/blog/recommended-config-for-agentic-engineering/). Локальный агент подключается к инструментам GitLab и передаёт задачи серверным агентам: они проверяют изменения и предлагают исправления упавших сборок. Обычные проверки и правила согласования сохраняются; работа расходует GitLab Credits."
+    },
+    {
+      "id": "reference-2026-11-18-topic-45",
+      "kind": "topic",
+      "title": "miHoYo разделила частоту наблюдения и действий игрового агента",
+      "url": "https://mihoyo-gamer.github.io/",
+      "body": "🔹 [miHoYo разделила частоту наблюдения и действий игрового агента](https://mihoyo-gamer.github.io/). Gamer смотрит на экран пять раз в секунду, а команды клавиатуре и мыши выдаёт 30 раз. В тесте авторов версия с обучением по результатам действий решила около половины головоломок Honkai из отдельного проверочного набора."
+    },
+    {
+      "id": "reference-2026-11-18-topic-46",
+      "kind": "topic",
+      "title": "У Kimi выросла длина принятого черновика ответа",
+      "url": "https://x.com/vllm_project/status/2122736816809992294",
+      "body": "🔹 [У Kimi выросла длина принятого черновика ответа](https://x.com/vllm_project/status/2122736816809992294). По данным vLLM, с черновой моделью, использующей скользящее окно контекста, Kimi K3.1 Pro принимала до 30% больше предложенных токенов за проверку. Ускорение полного ответа в обзоре не указано."
+    },
+    {
+      "id": "reference-2026-11-18-topic-50",
+      "kind": "topic",
+      "title": "Gallup: треть опрошенных молодых людей использует ИИ как собеседника",
+      "url": "https://www.404media.co/gallup-study-friendship-ai-companions/",
+      "body": "🔹 [Gallup: треть опрошенных молодых людей использует ИИ как собеседника](https://www.404media.co/gallup-study-friendship-ai-companions/). В онлайн-опросе более 16 тысяч человек 15–22 лет из 16 стран 33% использовали ИИ как компаньона. Они чаще сообщали об одиночестве, но исследование не устанавливает, что было причиной, а что следствием."
+    },
+    {
+      "id": "reference-2026-11-18-topic-51",
+      "kind": "topic",
+      "title": "Aftermath проверяет, успел ли заражённый пакет попасть в сборки",
+      "url": "https://gitlab-transcend.devpost.com/submissions/1238929-aftermath",
+      "body": "🔹 [Aftermath проверяет, успел ли заражённый пакет попасть в сборки](https://gitlab-transcend.devpost.com/submissions/1238929-aftermath). Прототип с хакатона GitLab восстанавливает прошлые запуски и доступные им ключи. Человек утверждает расследование и меры, после чего система отзывает только затронутые ключи и сохраняет доказательства."
+    },
+    {
+      "id": "reference-2026-11-18-topic-52",
+      "kind": "topic",
+      "title": "Lookback находит остальных пострадавших после исправления ошибки",
+      "url": "https://gitlab-transcend.devpost.com/submissions/1239533-lookback",
+      "body": "🔹 [Lookback находит остальных пострадавших после исправления ошибки](https://gitlab-transcend.devpost.com/submissions/1239533-lookback). В демонстрации агент подготовил проверку и исправление расчёта пособий; после одобрения человеком обычная программа пересчитала прошлые решения и выявила 413 недополучивших выплату домохозяйств."
+    },
+    {
+      "id": "reference-2026-11-18-topic-53",
+      "kind": "topic",
+      "title": "ShakeFix превращает сообщение из приложения в проверенное исправление",
+      "url": "https://gitlab-transcend.devpost.com/submissions/1255528-shakefix-shake-your-phone-ai-agents-ship-the-fix",
+      "body": "🔹 [ShakeFix превращает сообщение из приложения в проверенное исправление](https://gitlab-transcend.devpost.com/submissions/1255528-shakefix-shake-your-phone-ai-agents-ship-the-fix). Прототип воспроизводит ошибку тестом и сравнивает исправление с рабочей версией приложения. В одном запуске команды путь от голосовой жалобы до публикации занял 18 минут 34 секунды без участия человека."
+    },
+    {
+      "id": "reference-2026-11-18-topic-55",
+      "kind": "topic",
+      "title": "CodeTinder сохраняет предпочтения ревьюера в правилах репозитория",
+      "url": "https://gitlab-transcend.devpost.com/submissions/1226048-codetinder-swipe-for-the-love-of-code",
+      "body": "🔹 [CodeTinder сохраняет предпочтения ревьюера в правилах репозитория](https://gitlab-transcend.devpost.com/submissions/1226048-codetinder-swipe-for-the-love-of-code). В прототипе человек выбирает вариант функции из проходящих тесты; выбор обновляет документ принципов, по которому агент затем переписывает остальные изменения."
+    },
+    {
+      "id": "reference-2026-11-18-topic-56",
+      "kind": "topic",
+      "title": "Locus проверяет тактильные графики перед печатью",
+      "url": "https://gitlab-transcend.devpost.com/submissions/1238061-locus",
+      "body": "🔹 [Locus проверяет тактильные графики перед печатью](https://gitlab-transcend.devpost.com/submissions/1238061-locus). Агенты превращают письмо преподавателя в рельефный график с подписями Брайля. В прототипе выпуск разрешают отдельные правила читаемости на ощупь; сами агенты не могут объявить работу готовой."
+    },
+    {
+      "id": "reference-2026-11-18-topic-57",
+      "kind": "topic",
+      "title": "Stale пересматривает безопасность выпуска при изменениях снаружи",
+      "url": "https://gitlab-transcend.devpost.com/submissions/1256908-stale",
+      "body": "🔹 [Stale пересматривает безопасность выпуска при изменениях снаружи](https://gitlab-transcend.devpost.com/submissions/1256908-stale). Прототип следит, например, за отзывом доверия корневым сертификатам: агент готовит исправление, автоматические проверки и пробный выпуск подтверждают его перед переключением трафика."
+    },
+    {
+      "id": "reference-2026-11-18-topic-58",
+      "kind": "topic",
+      "title": "Earned Autonomy выдаёт агентам права отдельно для каждого изменения",
+      "url": "https://gitlab-transcend.devpost.com/submissions/1266904-earned-autonomy",
+      "body": "🔹 [Earned Autonomy выдаёт агентам права отдельно для каждого изменения](https://gitlab-transcend.devpost.com/submissions/1266904-earned-autonomy). В прототипе уровень самостоятельности зависит от доказательств безопасности. Агенты могут только повышать оценку риска; опасное изменение блокируется, для неудачного выпуска предусмотрен откат."
+    },
+    {
+      "id": "reference-2026-11-18-topic-59",
+      "kind": "topic",
+      "title": "Модель на 180 млрд параметров запустили на Mac с 32 ГБ памяти",
+      "url": "https://huggingface.co/blog/moe-expert-streaming",
+      "body": "🔹 [Модель на 180 млрд параметров запустили на Mac с 32 ГБ памяти](https://huggingface.co/blog/moe-expert-streaming). Экспериментальная доработка Transformers подгружает с SSD только нужные части Qwen3.8-Flash-Next: на M5 при короткой генерации 200 токенов автор получил 13,9 токена/с против 14,8 у Strata на одинаковых запросах. Для его агентов-программистов этого всё ещё мало."
+    },
+    {
+      "id": "reference-2026-11-18-topic-61",
+      "kind": "topic",
+      "title": "Redwood предлагает считать вычисления на развитие ИИ по назначению",
+      "url": "https://blog.redwoodresearch.org/p/how-should-we-define-capabilities",
+      "body": "🔹 [Redwood предлагает считать вычисления на развитие ИИ по назначению](https://blog.redwoodresearch.org/p/how-should-we-define-capabilities). Авторы предлагают отдельный бюджет для работ, улучшающих возможности моделей: например, мониторинг безопасности освобождается от него, пока его оценки не используют для обучения. Классификацию должны проверять независимые аудиторы; это предложение, не действующее правило."
+    },
+    {
+      "id": "reference-2026-11-18-practice-1",
+      "kind": "practice",
+      "title": "Проверить защиту Java4Shell в существующем Cloudflare",
+      "url": "https://blog.cloudflare.com/java4shell-waf-protection/",
+      "body": "🔹 [Проверить защиту Java4Shell в существующем Cloudflare](https://blog.cloudflare.com/java4shell-waf-protection/). Риск касается OpenJDK 17.0.6+ на x86-64 с AVX-512 VBMI, если приложение декодирует недоверенные данные Base64. На Pro и выше новые правила сначала только пишут журнал: проверьте совпадения с нормальным трафиком и включите блокировку. Параллельно обновите все уязвимые Java, включая версии внутри приложений и контейнеров, и перезапустите сервисы: WAF — фильтр веб-запросов — не закрывает все пути атаки."
+    },
+    {
+      "id": "reference-2026-11-18-practice-5",
+      "kind": "practice",
+      "title": "Дообучить небольшой пересказчик на записях вызовов",
+      "url": "https://www.datadoghq.com/blog/fine-tuning-patterns-baseten/",
+      "body": "🔹 [Дообучить небольшой пересказчик на записях вызовов](https://www.datadoghq.com/blog/fine-tuning-patterns-baseten/). Если вызовы уже записываются в Datadog, попробуйте pup finetune на одной повторяемой задаче: разделите целые цепочки вызовов между обучением и проверкой, сравните качество и завершённость пересказов, задержку. Нужны оплачиваемые вычисления Baseten и разрешение передавать туда данные."
+    },
+    {
+      "id": "reference-2026-11-18-practice-10",
+      "kind": "practice",
+      "title": "Автоматически предлагать исправления упавших сборок",
+      "url": "https://about.gitlab.com/blog/recommended-config-for-agentic-engineering/",
+      "body": "🔹 [Автоматически предлагать исправления упавших сборок](https://about.gitlab.com/blog/recommended-config-for-agentic-engineering/). В тестовом проекте GitLab.com подключите Fix CI/CD Pipeline к событию сбоя и оставьте проверку правки человеку. Нужны роль Maintainer проекта или Owner группы, настроенный исполнитель заданий сборки и GitLab Credits; агент читает только последние 150 КиБ журнала."
+    },
+    {
+      "id": "reference-2026-11-18-practice-11",
+      "kind": "practice",
+      "title": "Связать двух агентов через Vercel Board",
+      "url": "https://vercel.com/blog/introducing-vercel-board",
+      "body": "🔹 [Связать двух агентов через Vercel Board](https://vercel.com/blog/introducing-vercel-board). В экспериментальном проекте с доступом к Vercel задайте зависимость «исправление → ревью» и возврат к проверке автоматической сборки и тестов по расписанию: проверьте, сохраняются ли владелец и результат при передаче работы. Сервис экспериментальный; тарифы в анонсе не указаны, стоимость используемых агентов нужно учитывать отдельно."
+    },
+    {
+      "id": "reference-2026-11-18-practice-12",
+      "kind": "practice",
+      "title": "Прогнозировать занятость GPU по истории дообучений",
+      "url": "https://huggingface.co/blog/Dharma-AI/predicting-fine-tuning-time",
+      "body": "🔹 [Прогнозировать занятость GPU по истории дообучений](https://huggingface.co/blog/Dharma-AI/predicting-fine-tuning-time). Если сохранились логи однотипных запусков, добавьте к объёму обучения число проверок и сохранений модели. Сравните простой предиктор с нынешним расчётом на отложенных запусках; опубликованные результаты относятся только к H200 и не обещают такую же точность на вашем кластере."
+    },
+    {
+      "id": "reference-2026-11-18-practice-13",
+      "kind": "practice",
+      "title": "Проверить компактную модель распознавания на своих звонках",
+      "url": "https://huggingface.co/blog/rumble-2-flash",
+      "body": "🔹 [Проверить компактную модель распознавания на своих звонках](https://huggingface.co/blog/rumble-2-flash). Запустите Rumble-2-Flash через Transformers или vLLM на размеченной выборке нужного языка и сравните ошибки с текущим сервисом. Веса Apache 2.0; понадобятся собственные вычислительные ресурсы, качество русского приведённым английским тестом не подтверждено."
+    },
+    {
+      "id": "reference-2026-11-18-practice-14",
+      "kind": "practice",
+      "title": "Проверить прогнозные сигналы на одном потоке данных",
+      "url": "https://huggingface.co/blog/ibm-research/time-series-powered-streamhouse",
+      "body": "🔹 [Проверить прогнозные сигналы на одном потоке данных](https://huggingface.co/blog/ibm-research/time-series-powered-streamhouse). Если уже используете коммерческий Confluent с Flink, попробуйте обнаружение аномалий на телеметрии одного сервиса и сравните ложные тревоги с текущими порогами. Модели работают на CPU; стоимость доступа статья не сообщает."
+    }
+  ]
+}

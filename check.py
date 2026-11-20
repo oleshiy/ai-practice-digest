@@ -129,13 +129,13 @@ def check():
             assert item['slug']+'.html' in pages['comparisons.html'].links,item['slug']
             assert item['slug']+'.html' not in pages['index.html'].links,item['slug']
             assert item['slug']+'.html' not in pages['archive.html'].links,item['slug']
-    from archive_page import findings
+    from archive_page import findings,reference_findings
     rows=findings(EDITIONS)
     assert rows and len({x['url'] for x in rows})==len(rows)
-    assert (OUT/'findings.html').read_text().count('class="finding"')==len(rows)
+    assert (OUT/'findings.html').read_text().count('class="finding"')==len(rows)+len(reference_findings())
     assert all(x['edition']+'.html' in pages for x in rows)
     forbidden=r'n8n-ai-digest|/Users/|runtime/monthly|material_id|unit_id|record_hash|github_pat_|ghp_[A-Za-z0-9]{20}|BEGIN .*PRIVATE KEY'
-    for folder in [ROOT/'content',OUT]:
+    for folder in [ROOT/'content',ROOT/'findings',OUT]:
         for f in folder.rglob('*'):
             if f.is_file() and f.suffix!='.png':assert not re.search(forbidden,f.read_text()),f
     assert set(p.suffix for p in OUT.rglob('*') if p.is_file())<= {'.html','.css','.js','.png',''}
