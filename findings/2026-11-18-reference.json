@@ -17,13 +17,6 @@
       "body": "🔹 [NVIDIA сообщила о поставках Vera Rubin NVL72](https://nvidianews.nvidia.com/news/nvidia-announces-financial-results-for-third-quarter-fiscal-2027). В квартальном отчёте NVIDIA объявила о начале поставок системы и выручке $115,8 млрд — на 103% больше год к году."
     },
     {
-      "id": "reference-2026-11-18-topic-10",
-      "kind": "topic",
-      "title": "DaisyRose-27B дообучили на 1200 сложных агентских задачах",
-      "url": "https://huggingface.co/blog/RadixArk/daisyrose-27b-pushing-the-frontier-of-post-trainin",
-      "body": "🔹 [DaisyRose-27B дообучили на 1200 сложных агентских задачах](https://huggingface.co/blog/RadixArk/daisyrose-27b-pushing-the-frontier-of-post-trainin). RadixArk подбирала задания под ошибки исходной Qwen3.8-27B и проверяла обходы условий. В измерении разработчика на наборе агентских задач Terminal-Bench 4.1 доля решений с одной попытки выросла с 5,6% до 12%; контекст — 256 тысяч токенов, сессии до миллиона токенов используют сводки."
-    },
-    {
       "id": "reference-2026-11-18-topic-11",
       "kind": "topic",
       "title": "Google начала открывать Genie 4 подписчикам AI Ultra",
