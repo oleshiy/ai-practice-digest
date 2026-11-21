@@ -114,7 +114,32 @@ with tempfile.TemporaryDirectory() as temporary:
     assert '[документацией](https://example.com/docs)' in rows[1]['body']
     result=run(site,'check.py');assert result.returncode==0,result.stderr
     for name,content in previous.items():assert (site/'_site'/name).read_bytes()==content,name
+    merged = HEADER.replace('format: compact', '''format: compact
+finding_ids: 2+4,1,3+5+6
+legacy_heading_map: section-9=finding-4
+supporting_2: [Первая публикация](https://example.com/first) [Отчёт команды](https://example.com/report)''')
+    source.write_text(merged+BODY)
+    result=run(site,'build.py');assert result.returncode==0,result.stderr
+    result=run(site,'check.py');assert result.returncode==0,result.stderr
+    page=(site/'_site/2026-11-11-compact-fixture.html').read_text()
+    assert '<span id="section-9"></span>\n<p id="finding-2"><span id="finding-4"></span>🔹 Компания' in page
+    assert '<p id="finding-3"><span id="finding-5"></span><span id="finding-6"></span>🔹 Компания' in page
+    sources='<details><summary>Источники</summary><ul><li><a href="https://example.com/first">Первая публикация</a></li><li><a href="https://example.com/report">Отчёт команды</a></li></ul></details>'
+    assert 'Цена указана в анонсе.</p>\n'+sources in page
+    archive=(site/'_site/findings.html').read_text()
+    assert sources in archive
+    assert archive.count('href="2026-11-11-compact-fixture.html#finding-')==3
     for wrong in (
+        merged.replace('2+4','2+3')+BODY,
+        merged.replace('2+4','2+7')+BODY,
+        merged.replace('2+4','2++4')+BODY,
+        merged.replace('supporting_2:', 'supporting_4:')+BODY,
+        merged.replace('supporting_2:', 'supporting_02:')+BODY,
+        merged.replace('/first)', '/first) текст')+BODY,
+        merged.replace('https://example.com/first', 'https://example.com/report')+BODY,
+        merged.replace('https://example.com/first', 'https://example.com/model')+BODY,
+        merged.replace('https://example.com/first', 'https://user@example.com/first')+BODY,
+        HEADER.replace('format: compact','supporting_1: [Отчёт](https://example.com/report)')+BODY,
         HEADER.replace('count: 3','count: 4')+BODY,
         HEADER.replace('sections: 4','sections: 3')+BODY,
         HEADER.replace('format: compact','format: typo')+BODY,

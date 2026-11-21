@@ -4,7 +4,7 @@ import html,json,re,shutil
 from hashlib import sha256
 from datetime import date
 from urllib.parse import urlsplit
-from compact import compact_outline
+from compact import compact_outline, parse_finding_ids, supporting_links, render_sources
 ROOT=Path(__file__).resolve().parent
 OUT=ROOT/'_site'
 BASE='https://oleshiy.github.io/ai-practice-digest/'
@@ -35,9 +35,9 @@ def releases():
         if 'navigation' in meta and meta['navigation']!='top':raise ValueError(f'{source.name}: invalid navigation')
         if 'toc' in meta and meta['toc'] not in ('plain','sections'):raise ValueError(f'{source.name}: invalid toc')
         if 'finding_ids' in meta:
-            if meta.get('format') != 'compact' or not re.fullmatch(r'[1-9][0-9]*(?:,[1-9][0-9]*)*', meta['finding_ids']):
+            if meta.get('format') != 'compact':
                 raise ValueError(f'{source.name}: invalid compact finding IDs')
-            meta['finding_ids'] = tuple(map(int, meta['finding_ids'].split(',')))
+            meta['finding_ids'] = parse_finding_ids(meta['finding_ids'])
         if 'legacy_heading_map' in meta:
             if meta.get('format')!='compact':raise ValueError('legacy heading map requires compact format')
             pairs=meta['legacy_heading_map'].split(',')
@@ -54,7 +54,10 @@ def releases():
         slugs.add(slug)
         if not body.startswith('# ') or body.splitlines()[0][2:]!=meta['title']:raise ValueError(f'{source.name}: title differs from body')
         meta.update({'slug':slug,'file':source.name,'body':body,'count':int(meta['count']) if 'count' in meta else None})
-        if meta.get('format')=='compact' and meta['count'] is None:meta['count']=len(compact_outline(body, meta.get('finding_ids'))['topics'])
+        topics = compact_outline(body, meta.get('finding_ids'))['topics'] if meta.get('format') == 'compact' else []
+        meta['sources_by_anchor'] = supporting_links(meta, topics)
+        if meta.get('format') == 'compact' and meta['count'] is None:
+            meta['count'] = len(topics)
         meta.setdefault('label',LABELS[meta['type']])
         meta.setdefault('subtitle','Редакционный выпуск со ссылками на источники и существенными ограничениями.')
         meta.setdefault('window',meta['date'])
@@ -137,10 +140,14 @@ def figure_asset(url):
         raise ValueError("Figure asset must be a PNG image")
     return source
 
-def markdown(text,*,toc_sections=False,reserved_heading_ids=(),compact=False,legacy_heading_map=None,finding_ids=None):
+def markdown(text,*,toc_sections=False,reserved_heading_ids=(),compact=False,legacy_heading_map=None,finding_ids=None,sources_by_anchor=None):
     """Render paragraphs and numbered entries with indented continuation paragraphs."""
     compact_paragraphs=compact_outline(text, finding_ids)['paragraphs'] if compact else {}
-    legacy_heading_map=legacy_heading_map or {}
+    sources_by_anchor = sources_by_anchor or {}
+    canonical = {alias: paragraph['anchor'] for paragraph in compact_paragraphs.values()
+                 for alias in paragraph.get('aliases', ())}
+    legacy_heading_map = {key: canonical.get(target, target)
+                          for key, target in (legacy_heading_map or {}).items()}
     targets={'main'}|{paragraph['anchor'] for paragraph in compact_paragraphs.values()}
     if legacy_heading_map and (not compact or any(not re.fullmatch(r'section-[1-9][0-9]*',key) or target not in targets for key,target in legacy_heading_map.items())):
         raise ValueError('invalid or missing legacy heading target')
@@ -198,7 +205,11 @@ def markdown(text,*,toc_sections=False,reserved_heading_ids=(),compact=False,leg
             blocks.extend(aliases.get(paragraph_info['anchor'],()))
         attributes=' id="'+paragraph_info['anchor']+'"' if paragraph_info else ''
         if paragraph_info and 'title' not in paragraph_info:toc.append((paragraph_info['anchor'],paragraph_info['section']))
-        blocks.append('<p'+attributes+'>'+inline(' '.join(para))+'</p>')
+        old_ids = paragraph_info.get('aliases', ()) if paragraph_info else ()
+        anchors = ''.join(f'<span id="{alias}"></span>' for alias in old_ids)
+        blocks.append('<p'+attributes+'>'+anchors+inline(' '.join(para))+'</p>')
+        if paragraph_info and paragraph_info['anchor'] in sources_by_anchor:
+            blocks.append(render_sources(sources_by_anchor[paragraph_info['anchor']], inline))
     if set(legacy_heading_map.values())-emitted_targets:raise ValueError('legacy heading target was not rendered')
     return '\n'.join(blocks),toc
 
@@ -230,7 +241,7 @@ def build():
     archive='<main id="main" class="home"><div class="intro compact"><p class="eyebrow">Все выпуски</p><h1>Архив выпусков</h1><p>У каждого выпуска своё окно отбора. Находки в разных выпусках могут пересекаться. Остальное полезное — в <a href="findings.html">архиве с поиском</a>.</p></div><section class="editions" aria-label="Архив выпусков">'+cards+'</section></main>'
     (OUT/'archive.html').write_text(frame('Архив','Все опубликованные выпуски «Практики ИИ».',archive,'archive.html'))
     for e in EDITIONS:
-        content,toc=markdown(e['body'],toc_sections=e.get('toc')=='sections',reserved_heading_ids=e.get('reserved_heading_ids',()),compact=e.get('format')=='compact',legacy_heading_map=e.get('legacy_heading_map'),finding_ids=e.get('finding_ids'))
+        content,toc=markdown(e['body'],toc_sections=e.get('toc')=='sections',reserved_heading_ids=e.get('reserved_heading_ids',()),compact=e.get('format')=='compact',legacy_heading_map=e.get('legacy_heading_map'),finding_ids=e.get('finding_ids'),sources_by_anchor=e.get('sources_by_anchor'))
         contents='<details open><summary>В этом выпуске</summary><ol>'+''.join('<li><a href="#'+a+'">'+html.escape(plain_inline(t) if e.get('toc') in ('plain','sections') else t)+'</a></li>' for a,t in toc)+'</ol></details>'
         heading=e['title']
         article='<article class="prose">'+content+'</article>'

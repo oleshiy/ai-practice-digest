@@ -10,7 +10,7 @@ from pathlib import Path
 from datetime import date,timedelta
 from urllib.parse import urlsplit
 from provided_source import provided_topic,SOURCE
-from compact import compact_outline
+from compact import compact_outline, render_sources
 
 LINK=re.compile(r'\[([^\]]+)\]\((https?://[^\s)]+)\)')
 FRESH_DAYS=7
@@ -26,7 +26,7 @@ def findings(editions):
                 seen.add(url)
                 rows.append({'title':topic['title'],'url':url,'source':urlsplit(url).netloc.removeprefix('www.'),'date':e['date'],
                              'edition':e['slug'],'edition_title':e['title'],'section':topic['section'],'body':topic['body'],
-                             'anchor':topic['anchor']})
+                             'anchor':topic['anchor'],'supporting':e.get('sources_by_anchor',{}).get(topic['anchor'],[])})
             continue
         section='';lines=e['body'].splitlines();i=0;anchor=0
         while i<len(lines):
@@ -106,7 +106,7 @@ def render_archive(editions, inline, reference_rows=None):
             target=x['edition']+'.html'+('#'+x['anchor'] if x.get('anchor') else '')
             note=('<p class="finding-meta">'+html.escape(x['date'])+' · <a href="'+target+'">'+html.escape(x['section'] or 'выпуск')+'</a></p>')
             anchor=''
-        cards.append('<article class="finding" data-source="'+html.escape(x['source'],quote=True)+'" data-fresh="'+str(fresh).lower()+'" data-view="'+x['view']+'" data-date="'+x['date']+'"'+anchor+hidden+'><h2><a href="'+html.escape(x['url'],quote=True)+'">'+html.escape(x['title'])+'</a></h2>'+note+('<p>'+inline(x['body'])+'</p>' if x['body'] else '')+'</article>')
+        cards.append('<article class="finding" data-source="'+html.escape(x['source'],quote=True)+'" data-fresh="'+str(fresh).lower()+'" data-view="'+x['view']+'" data-date="'+x['date']+'"'+anchor+hidden+'><h2><a href="'+html.escape(x['url'],quote=True)+'">'+html.escape(x['title'])+'</a></h2>'+note+('<p>'+inline(x['body'])+'</p>' if x['body'] else '')+render_sources(x.get('supporting'), inline)+'</article>')
     first=min(row['date'] for row in rows)
     source_note=' Для письма без публичной ссылки доступен разбор с описанием источника.' if any(x['source']==SOURCE for x in rows) else ''
     return ('<style>@media(min-width:851px){.findings-page .filters{grid-template-columns:repeat(3,minmax(0,1fr))}}</style><main id="main" class="findings-page"><header class="archive-head"><h1>Архив находок</h1><p>'+str(len(rows))+' находок из выпусков и справочного архива с '+html.escape(first)+' по '+html.escape(newest.isoformat())+'. Даты обозначают выпуск или подборку, а не дату исходной публикации. Справочные темы и адресные практики сохранены отдельно от выпуска; их наличие здесь не означает рекомендацию для платформы.'+source_note+'</p></header>'

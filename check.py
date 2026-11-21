@@ -4,12 +4,12 @@ from html.parser import HTMLParser
 from urllib.parse import urlsplit,unquote
 import json,re,struct
 from provided_source import provided_source,provided_topic,NOTE
-from compact import compact_outline
+from compact import LINK, compact_outline
 ROOT=Path(__file__).resolve().parent
 OUT=ROOT/'_site'
 class Page(HTMLParser):
     def __init__(self,text):
-        super().__init__(convert_charrefs=True);self.links=[];self.ids=set();self.prose=False;self.items=0;self.sections=0;self.viewport=False;self.icons=[];self.images=[];self.feed(text)
+        super().__init__(convert_charrefs=True);self.links=[];self.ids=set();self.prose=False;self.in_sources=False;self.items=0;self.sections=0;self.viewport=False;self.icons=[];self.images=[];self.feed(text)
     def handle_starttag(self,tag,attrs):
         a=dict(attrs)
         if 'id' in a:
@@ -18,10 +18,12 @@ class Page(HTMLParser):
         if tag=='link' and a.get('rel')=='icon':self.icons.append(a)
         if tag=='img':self.images.append(a)
         if tag=='article' and a.get('class')=='prose':self.prose=True
-        if self.prose and tag=='li':self.items+=1
+        if self.prose and tag=='details':self.in_sources=True
+        if self.prose and tag=='li' and not self.in_sources:self.items+=1
         if self.prose and tag=='h2':self.sections+=1
         if tag=='meta' and a.get('name')=='viewport':self.viewport=True
     def handle_endtag(self,tag):
+        if tag=='details':self.in_sources=False
         if tag=='article':self.prose=False
 
 def check_thematic(edition,page):
@@ -100,6 +102,8 @@ def check():
             assert topics and len(topics)==e['count'],(e['slug'],'compact topic count differs')
             assert len({topic['url'] for topic in topics})==len(topics),(e['slug'],'duplicate compact source')
             assert all(topic['anchor'] in page.ids for topic in topics),(e['slug'],'compact anchor missing')
+            for topic in topics:
+                assert all(alias in page.ids for alias in topic.get('aliases', ())), (e['slug'], 'missing finding alias')
             if 'sections' in e:assert len(outline['sections'])==e['sections'],(e['slug'],'compact section count differs')
             assert page.items==0,(e['slug'],page.items)
         elif e['type']=='daily':
@@ -117,6 +121,8 @@ def check():
         nonempty=[line for line in raw.splitlines() if line.strip()]
         assert nonempty[0].startswith('# ') and (e.get('format')=='compact' or nonempty[1].startswith('## ') or e['type']!='daily' and 'sections' in e and nonempty[1].startswith('### ')),e['slug']
         source_links=re.findall(r'\]\((https?://[^\s)]+)\)',raw)
+        for links in e.get('sources_by_anchor', {}).values():
+            source_links.extend(LINK.fullmatch(link)[2] for link in links)
         assert all(u in page.links for u in source_links),e['slug']
         assert source_links and len(source_links)<=len(page.links)
         assert e['slug']+'.html' in pages['index.html'].links,e['slug']
