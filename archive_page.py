@@ -20,7 +20,7 @@ def findings(editions):
     seen=set();rows=[]
     for e in editions:
         if e.get('format')=='compact':
-            for topic in compact_outline(e['body'])['topics']:
+            for topic in compact_outline(e['body'], e.get('finding_ids'))['topics']:
                 url=topic['url']
                 if url in seen:continue
                 seen.add(url)

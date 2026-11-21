@@ -5,7 +5,7 @@ LINK=re.compile(r'\[([^\]]+)\]\((https?://[^\s)]+)\)')
 SECTION=re.compile(r'^(?:🔥|➡️) \*\*(.+?)\*\*$')
 PRACTICE={'Что из этого применить в платформе','Что можно внедрить за две недели'}
 
-def compact_outline(text):
+def compact_outline(text, finding_ids=None):
     """Keep paragraph text intact; derive titles from its first complete sentence."""
     lines=text.splitlines();i=0;section='';sections=[];paragraphs={};topics=[];plain_sections=0
     while i<len(lines):
@@ -31,4 +31,9 @@ def compact_outline(text):
         topic={'anchor':'finding-'+str(len(topics)+1),'title':title,'url':link[2],
                'section':section,'body':value,'urls':list(dict.fromkeys(m[2] for m in LINK.finditer(value)))}
         paragraphs[start]=topic;topics.append(topic)
+    if finding_ids is not None:
+        if len(finding_ids) != len(topics) or set(finding_ids) != set(range(1, len(topics) + 1)):
+            raise ValueError('finding_ids must identify every compact topic exactly once')
+        for topic, finding_id in zip(topics, finding_ids):
+            topic['anchor'] = f'finding-{finding_id}'
     return {'topics':topics,'sections':sections,'paragraphs':paragraphs}

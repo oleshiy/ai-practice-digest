@@ -23,6 +23,25 @@ def test_title_sentences():
     assert topic['urls']==['https://example.com/protocol','https://example.com/docs']
     print('PASS: first-sentence titles; attribution before Mercor/AMD action; versions 1.0/5.2, decimal amount, link labels; unchanged body/anchors/URLs')
 
+def test_reordered_finding_links():
+    body = """## Что можно попробовать за две недели
+
+🔹 [Вторая новость](https://example.com/two). Краткая проверка.
+
+## Новости
+
+🔹 [Первая новость](https://example.com/one)."""
+    outline = compact_outline(body, [2, 1])
+    assert [topic['anchor'] for topic in outline['topics']] == ['finding-2', 'finding-1']
+    assert outline['paragraphs'][2]['anchor'] == 'finding-2'
+    for invalid_ids in ([2, 2], [1], [1, 3]):
+        try:
+            compact_outline(body, invalid_ids)
+        except ValueError:
+            continue
+        raise AssertionError(f'invalid IDs accepted: {invalid_ids}')
+
+test_reordered_finding_links()
 test_title_sentences()
 if '--titles-only' in sys.argv:raise SystemExit(0)
 

@@ -96,7 +96,7 @@ def check():
         provided_source(e)
         page=pages[e['slug']+'.html']
         if e.get('format')=='compact':
-            outline=compact_outline(e['body']);topics=outline['topics']
+            outline=compact_outline(e['body'], e.get('finding_ids'));topics=outline['topics']
             assert topics and len(topics)==e['count'],(e['slug'],'compact topic count differs')
             assert len({topic['url'] for topic in topics})==len(topics),(e['slug'],'duplicate compact source')
             assert all(topic['anchor'] in page.ids for topic in topics),(e['slug'],'compact anchor missing')
