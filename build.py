@@ -49,6 +49,18 @@ def releases():
             if not re.fullmatch(r'[1-9]\d*(?:,[1-9]\d*)*',meta['reserved_heading_ids']):raise ValueError('invalid reserved heading IDs')
             meta['reserved_heading_ids']=tuple(map(int,meta['reserved_heading_ids'].split(',')))
             if tuple(sorted(set(meta['reserved_heading_ids'])))!=meta['reserved_heading_ids']:raise ValueError('reserved heading IDs must be unique and sorted')
+        if 'heading_ids' in meta:
+            if meta.get('format') == 'compact':
+                raise ValueError('explicit heading IDs require a standard edition')
+            if not re.fullmatch(r'[1-9]\d*(?:,[1-9]\d*)*', meta['heading_ids']):
+                raise ValueError('invalid heading IDs')
+            ids = tuple(map(int, meta['heading_ids'].split(',')))
+            headings = re.findall(r'^#{2,3} ', body, re.M)
+            if len(ids) != len(headings) or len(set(ids)) != len(ids):
+                raise ValueError('expected one unique ID per heading')
+            if set(ids).intersection(meta.get('reserved_heading_ids', ())):
+                raise ValueError('heading IDs must differ from reserved heading IDs')
+            meta['heading_ids'] = ids
         slug=source.stem
         if not SLUG.fullmatch(slug) or slug in slugs:raise ValueError(f'{source.name}: invalid or duplicate slug')
         slugs.add(slug)
@@ -140,7 +152,7 @@ def figure_asset(url):
         raise ValueError("Figure asset must be a PNG image")
     return source
 
-def markdown(text,*,toc_sections=False,reserved_heading_ids=(),compact=False,legacy_heading_map=None,finding_ids=None,sources_by_anchor=None):
+def markdown(text,*,toc_sections=False,reserved_heading_ids=(),heading_ids=(),compact=False,legacy_heading_map=None,finding_ids=None,sources_by_anchor=None):
     """Render paragraphs and numbered entries with indented continuation paragraphs."""
     compact_paragraphs=compact_outline(text, finding_ids)['paragraphs'] if compact else {}
     sources_by_anchor = sources_by_anchor or {}
@@ -156,6 +168,7 @@ def markdown(text,*,toc_sections=False,reserved_heading_ids=(),compact=False,leg
     blocks=['<span id="section-'+str(n)+'"></span>' for n in reserved_heading_ids if 'section-'+str(n) not in legacy_heading_map]
     blocks.extend(aliases.get('main',()))
     reserved_heading_ids=set(reserved_heading_ids)|{int(key.split('-')[1]) for key in legacy_heading_map}
+    assigned_headings = iter(heading_ids)
     toc=[];lines=text.splitlines();i=0;heading=0;emitted_targets={'main'}
     while i<len(lines):
         line=lines[i]
@@ -178,12 +191,15 @@ def markdown(text,*,toc_sections=False,reserved_heading_ids=(),compact=False,leg
                 blocks.append('<h4>'+inline(h[2])+'</h4>');continue
             heading+=1
             while heading in reserved_heading_ids:heading+=1
-            anchor='section-'+str(heading);title=h[2]
+            number = next(assigned_headings) if heading_ids else heading
+            anchor='section-'+str(number);title=h[2]
             if not toc_sections or len(h[1])==2:toc.append((anchor,title))
             blocks.append(f'<h{len(h[1])} id="{anchor}">'+inline(title)+f'</h{len(h[1])}>');continue
         li=re.match(r'^(\d+\.|-) (.+)',line)
         if li:
-            tag='ul' if li[1]=='-' else 'ol';blocks.append('<'+tag+'>')
+            tag='ul' if li[1]=='-' else 'ol'
+            start = int(li[1][:-1]) if tag == 'ol' else 1
+            blocks.append(f'<ol start="{start}">' if start != 1 else '<'+tag+'>')
             while i<len(lines):
                 match=re.match(r'^(\d+\.|-) (.+)',lines[i])
                 if not match:break
@@ -241,7 +257,7 @@ def build():
     archive='<main id="main" class="home"><div class="intro compact"><p class="eyebrow">Все выпуски</p><h1>Архив выпусков</h1><p>У каждого выпуска своё окно отбора. Находки в разных выпусках могут пересекаться. Остальное полезное — в <a href="findings.html">архиве с поиском</a>.</p></div><section class="editions" aria-label="Архив выпусков">'+cards+'</section></main>'
     (OUT/'archive.html').write_text(frame('Архив','Все опубликованные выпуски «Практики ИИ».',archive,'archive.html'))
     for e in EDITIONS:
-        content,toc=markdown(e['body'],toc_sections=e.get('toc')=='sections',reserved_heading_ids=e.get('reserved_heading_ids',()),compact=e.get('format')=='compact',legacy_heading_map=e.get('legacy_heading_map'),finding_ids=e.get('finding_ids'),sources_by_anchor=e.get('sources_by_anchor'))
+        content,toc=markdown(e['body'],toc_sections=e.get('toc')=='sections',reserved_heading_ids=e.get('reserved_heading_ids',()),heading_ids=e.get('heading_ids',()),compact=e.get('format')=='compact',legacy_heading_map=e.get('legacy_heading_map'),finding_ids=e.get('finding_ids'),sources_by_anchor=e.get('sources_by_anchor'))
         contents='<details open><summary>В этом выпуске</summary><ol>'+''.join('<li><a href="#'+a+'">'+html.escape(plain_inline(t) if e.get('toc') in ('plain','sections') else t)+'</a></li>' for a,t in toc)+'</ol></details>'
         heading=e['title']
         article='<article class="prose">'+content+'</article>'

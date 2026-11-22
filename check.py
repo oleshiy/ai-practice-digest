@@ -75,6 +75,11 @@ def check():
     assert rendered.count('<ol>')==1 and rendered.count('<li>')==2
     assert '<p>Первый абзац.</p><p>Второй абзац.</p></li>' in rendered
     assert rendered.endswith('<p>Конечная статистика.</p>')
+    resumed,_=markdown('1. Первый\n\n#### Продолжение\n\n2. Второй\n3. Третий')
+    assert '<ol start="2">' in resumed and resumed.count('<li>') == 3
+    reordered, nav = markdown('## Первая\n### Вторая', heading_ids=(5, 2), reserved_heading_ids=(1,))
+    assert [anchor for anchor, _ in nav] == ['section-5', 'section-2']
+    assert 'id="section-1"' in reordered
     pages={p.name:Page(p.read_text()) for p in OUT.glob('*.html')}
     assert len(pages)==len(EDITIONS)+sum(bool(e.get('redirect_from')) for e in EDITIONS)+4+len(COMPARISONS)+(1 if COMPARISONS else 0)
     for name,page in pages.items():

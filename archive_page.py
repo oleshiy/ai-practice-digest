@@ -28,12 +28,15 @@ def findings(editions):
                              'edition':e['slug'],'edition_title':e['title'],'section':topic['section'],'body':topic['body'],
                              'anchor':topic['anchor'],'supporting':e.get('sources_by_anchor',{}).get(topic['anchor'],[])})
             continue
+        assigned_headings = iter(e.get('heading_ids', ()))
         section='';lines=e['body'].splitlines();i=0;anchor=0
         while i<len(lines):
             line=lines[i]
             if re.match(r'^#{2,3} ',line):
                 anchor+=1
                 while anchor in e.get('reserved_heading_ids',()):anchor+=1
+                if e.get('heading_ids'):
+                    anchor = next(assigned_headings)
             if line.startswith('## '):section=line[3:].strip();i+=1;continue
             if e.get('toc')=='sections' and section in ('Что из этого применить в платформе', 'Что можно внедрить за две недели'):i+=1;continue
             title=url=None;body=[];provided=False
